@@ -29,7 +29,7 @@ function OnConnect() {
   <header>
 
     <div class="wrapper" v-if="authenticate">
-      <TextClient :slotName=inputName :slotGame = inputGame serverInfo="archipelago.gg:53033"/>
+      <TextClient :slotName=inputName :slotGame=inputGame :serverInfo=inputServerInfo />
     </div>
     <div v-else>
       <div>
