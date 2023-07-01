@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import TextClient from './components/TextClient.vue'
+import ReceivedItems from './components/ReceivedItems.vue';
 import {provide, ref, computed} from 'vue'
 import { walkIdentifiers } from '@vue/compiler-core'
 const count = ref(0)
-let inputName = ref("SneakiRoR")
-let inputGame = ref("Risk of Rain 2")
-let inputServerInfo = ref("archipelago.gg:38281")
-let authenticate = ref(false)
+const inputName = ref("SneakiRoR")
+const inputServerInfo = ref("archipelago.gg:53033")
+const authenticate = ref(false)
+const showTextClient = ref(false)
+const showHints = ref(false)
+const toggleRecieved = ref(false)
+const receivedItems = ref([""])
 const plusCount = computed({
   get: () => count.value,
   set: (val) => {
@@ -21,22 +25,42 @@ for (let i = 0; i < 8; i++) {
   }, 1000 * i)
 }
 function OnConnect() {
-  authenticate.value = true;
+  authenticate.value = true
+}
+function ToggleItemsRecieved() {
+  toggleRecieved.value = true
+  showTextClient.value = false
+  showHints.value = false
+}
+function ShowTextClient() {
+  showTextClient.value = true
+  toggleRecieved.value = false
+  showHints.value = false
+}
+function ShowHints() {
+  showHints.value = true
+  showTextClient.value = false
+  toggleRecieved.value = false
 }
 </script>
 
 <template>
   <header>
-
+    <button v-on:click="ToggleItemsRecieved">Items Recieved</button>
+    <button v-on:click="ShowTextClient">Show Text Client</button>
+    <button v-on:click="ShowHints">Show Hints</button>
+  </header>
+  <div>
     <div class="wrapper" v-if="authenticate">
-      <TextClient :slotName=inputName :slotGame=inputGame :serverInfo=inputServerInfo />
+      <div v-show="showTextClient">
+        <TextClient :slotName=inputName :serverInfo=inputServerInfo @onRecievedItemsChanged="(payload) => {
+            receivedItems = payload;
+          }"/>
+      </div>
     </div>
-    <div v-else>
+    <div v-show="!authenticate">
       <div>
         <input type="text" name="Server Info" placeholder="Server Info" v-model="inputServerInfo">
-      </div>
-      <div>
-        <input type="text" name="Game" placeholder="Game" v-model="inputGame">
       </div>
       <div>
         <input type="text" name="Slot" placeholder="Slot Name" v-model="inputName">
@@ -45,7 +69,10 @@ function OnConnect() {
         <button v-on:click="OnConnect">Connect</button>
       </div>
     </div>
-  </header>
+    <div v-show="toggleRecieved">
+      <ReceivedItems :receivedItems="receivedItems"/>
+    </div>
+  </div>
 
   <main>
   </main>

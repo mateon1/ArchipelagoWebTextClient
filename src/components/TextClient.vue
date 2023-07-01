@@ -3,10 +3,11 @@ import { ArchipelagoClient, ClientStatus, CommandPacketType, ItemsHandlingFlags 
 import { computed, defineComponent, reactive, ref, inject} from "vue";
 const props = defineProps<{
   slotName: string,
-  slotGame: string,
   serverInfo: string,
 }>()
-console.log(props.slotGame)
+const emit = defineEmits <{
+  (e: "onRecievedItemsChanged", itemName: string[]): void
+}>()
 console.log(props.slotName)
 interface AppConfig {
   globalClient: ArchipelagoClient
@@ -14,12 +15,12 @@ interface AppConfig {
 const client = new ArchipelagoClient(props.serverInfo)
 let lastKnownScrollLocation = document.body.clientHeight
 let totalHeight = document.body.clientHeight
+const receivedItems = ref("")
 document.addEventListener("scroll", () => {
   lastKnownScrollLocation = window.scrollY + window.innerHeight
   lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation)
 })
 const text = ref(["<span class='default'>Welcome</span>"])
-const count = inject<Number>('count')
 let connected = ref(false)
 const plusText = computed({
   get: () => text.value,
@@ -31,11 +32,11 @@ const plusText = computed({
 
 let credentials = {
       name: props.slotName,
-      game: props.slotGame,
+      game: '',
       uuid: "8da62081-7213-4543-97f6-b54d40e2fe52",
       version: { major: 0, minor: 3, build: 7 },
       items_handling: ItemsHandlingFlags.REMOTE_ALL,
-      tags: ["Text Client", "AP"]
+      tags: ["TextOnly", "AP", "Mobile Text Client"]
   };
 Connect();
 
@@ -54,6 +55,7 @@ function Connect() {
     console.log("connected")
     RecieveText()
     RecievedItems()
+    GetRoomInfo()
   }
 }
 
@@ -117,11 +119,21 @@ function RecieveText() {
 
 function RecievedItems() {
   client.addListener('receivedItems', (packet) => {
+    let packetItems: string[] = []
     packet.items.forEach(i => {
       console.log(client.items.name(i.item))
+      const id = i.item
+      const name = client.items.name(i.item)
+      packetItems.push(name)
     })
+    emit("onRecievedItemsChanged", packetItems)
   })
   
+}
+function GetRoomInfo() {
+  client.addListener('roomInfo', (packet) => {
+    console.log(packet)
+  })
 }
 
 function changeHeight(el:any) {
@@ -133,7 +145,6 @@ function changeHeight(el:any) {
 
 <template>
 <div class = "forloop" v-for="t in text" :ref="el => changeHeight(el)"> <span v-html = t></span></div>
-<div>{{ count }}</div>
 </template>
 
 <style scoped>
