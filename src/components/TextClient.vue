@@ -6,7 +6,8 @@ const props = defineProps<{
   serverInfo: string,
 }>()
 const emit = defineEmits <{
-  (e: "onRecievedItemsChanged", itemName: string[]): void
+  (e: 'onRecievedItemsChanged', itemName: string[]): void
+  (e: 'authenticted', authenticate: {err: string, authenticate: boolean}): void
 }>()
 console.log(props.slotName)
 interface AppConfig {
@@ -49,14 +50,20 @@ function Connect() {
       .then(() => {
           plusText.value = [`<span class="default">Connected to room with ${client.data.players.size} players.</span>`]
           connected.value = true;
+          RecieveText()
+          RecievedItems()
+          GetRoomInfo()
       })
-      .catch(console.error)
-  if(connected) {
-    console.log("connected")
-    RecieveText()
-    RecievedItems()
-    GetRoomInfo()
-  }
+      .catch(() => {
+        emit("authenticted", {err: "Couldn't connect for some reason", authenticate: false})
+      }) 
+  // if(connected) {
+  //   console.log("connected")
+  //   console.log(connected.value)
+
+  // } else {
+  //   console.log("failed to connect")
+  // }
 }
 
 function Disconnect() {
@@ -144,7 +151,7 @@ function changeHeight(el:any) {
 </script>
 
 <template>
-<div class = "forloop" v-for="t in text" :ref="el => changeHeight(el)"> <span v-html = t></span></div>
+<div v-if="connected" class="forloop" v-for="t in text" :ref="el => changeHeight(el)"> <span v-html = t></span></div>
 </template>
 
 <style scoped>

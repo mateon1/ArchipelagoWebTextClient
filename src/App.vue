@@ -7,9 +7,8 @@ const count = ref(0)
 const inputName = ref("SneakiRoR")
 const inputServerInfo = ref("archipelago.gg:53033")
 const authenticate = ref(false)
-const showTextClient = ref(false)
-const showHints = ref(false)
-const toggleRecieved = ref(false)
+const errorMessage = ref("")
+const viewPage = ref("")
 const receivedItems = ref([""])
 const plusCount = computed({
   get: () => count.value,
@@ -26,36 +25,22 @@ for (let i = 0; i < 8; i++) {
 }
 function OnConnect() {
   authenticate.value = true
-}
-function ToggleItemsRecieved() {
-  toggleRecieved.value = true
-  showTextClient.value = false
-  showHints.value = false
-}
-function ShowTextClient() {
-  showTextClient.value = true
-  toggleRecieved.value = false
-  showHints.value = false
-}
-function ShowHints() {
-  showHints.value = true
-  showTextClient.value = false
-  toggleRecieved.value = false
+  errorMessage.value = ""
 }
 </script>
 
 <template>
   <header>
-    <button v-on:click="ToggleItemsRecieved">Items Recieved</button>
-    <button v-on:click="ShowTextClient">Show Text Client</button>
-    <button v-on:click="ShowHints">Show Hints</button>
+    <button v-on:click="viewPage = 'itemRecieved'">Items Recieved</button>
+    <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
+    <button v-on:click="viewPage = 'Hints'">Show Hints</button>
   </header>
   <div>
     <div class="wrapper" v-if="authenticate">
-      <div v-show="showTextClient">
-        <TextClient :slotName=inputName :serverInfo=inputServerInfo @onRecievedItemsChanged="(payload) => {
-            receivedItems = payload;
-          }"/>
+      <div v-show="viewPage === 'textClient'">
+        <TextClient :slotName=inputName :serverInfo=inputServerInfo 
+        @authenticted="(payload) => { authenticate = payload.authenticate; errorMessage = payload.err}"
+          />
       </div>
     </div>
     <div v-show="!authenticate">
@@ -68,8 +53,11 @@ function ShowHints() {
       <div>
         <button v-on:click="OnConnect">Connect</button>
       </div>
+      <div>
+        <p>{{ errorMessage }}</p>
+      </div>
     </div>
-    <div v-show="toggleRecieved">
+    <div v-show="viewPage === 'itemRecieved'">
       <ReceivedItems :receivedItems="receivedItems"/>
     </div>
   </div>
