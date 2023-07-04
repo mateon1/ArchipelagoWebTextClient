@@ -2,10 +2,11 @@
 const props = defineProps<{
   receivedItems: string[],
 }>()
+console.log(props.receivedItems)
 </script>
 <template>
-    <h1>Recieved Items:</h1>
-    <div v-for="r in receivedItems">
-        {{ r }},
+    <h1>Recent Items:</h1>
+    <div v-for="r in props.receivedItems">
+        {{ r }}
     </div>
 </template>

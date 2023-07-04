@@ -50,20 +50,21 @@ function Connect() {
       .then(() => {
           plusText.value = [`<span class="default">Connected to room with ${client.data.players.size} players.</span>`]
           connected.value = true;
-          RecieveText()
-          RecievedItems()
-          GetRoomInfo()
+      }).then(() => {
+        
       })
       .catch(() => {
         emit("authenticted", {err: "Couldn't connect for some reason", authenticate: false})
+        Disconnect()
       }) 
-  // if(connected) {
-  //   console.log("connected")
-  //   console.log(connected.value)
-
-  // } else {
-  //   console.log("failed to connect")
-  // }
+  if(connected) {
+    console.log("connected")
+    RecieveText()
+    RecievedItems()
+    GetRoomInfo()
+  } else {
+    console.log("failed to connect")
+  }
 }
 
 function Disconnect() {
@@ -71,9 +72,11 @@ function Disconnect() {
   connected.value = false
   client.removeListener('printJSON', () => {})
   client.removeListener('receivedItems', () => {})
+  client.removeListener('roomInfo', () => {})
   
 }
 function RecieveText() {
+  console.log("text")
   // Listen for packet events.
   client.addListener("printJSON", (packet) => {
     let word = "";
@@ -133,6 +136,7 @@ function RecievedItems() {
       const name = client.items.name(i.item)
       packetItems.push(name)
     })
+    console.log(packetItems)
     emit("onRecievedItemsChanged", packetItems)
   })
   
