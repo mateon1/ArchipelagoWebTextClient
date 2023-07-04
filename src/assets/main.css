@@ -3,7 +3,7 @@
 #app {
   max-width: 1280px;
   margin: 0 auto;
-
+  
   font-weight: normal;
 }
 
@@ -22,6 +22,29 @@ header {
   margin: 0 auto 2rem;
 }
 
+.APheader {
+  z-index: 100;
+  position: absolute;
+  place-content: center;
+  display: flex;
+  place-items: center;
+  width: 100vw;
+  padding: 2rem 2rem;
+  background: var(--color-background);
+}
+
+.APbody {
+  display: flex;
+  place-content: center;
+  height: 100vh;
+  place-items: center;
+  padding: 0 2rem;
+  width: 100vw;
+}
+
+.APheader button {
+  height: 5vh;
+}
 @media (hover: hover) {
   a:hover {
     background-color: hsla(160, 100%, 37%, 0.2);
@@ -38,6 +61,7 @@ header {
     display: flex;
     width: 100vw;
   }
+
   .APheader {
     z-index: 100;
     position: absolute;
@@ -47,6 +71,7 @@ header {
     width: 100vw;
     padding: 0 2rem;
   }
+
   .APbody {
     display: flex;
     place-content: center;
@@ -55,10 +80,13 @@ header {
     padding: 0 2rem;
     width: 100vw;
   }
+
   .logo {
     margin: 0 2rem 0 0;
   }
+
   .APheader button {
     height: 5vh;
   }
+
 }
