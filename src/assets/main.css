@@ -24,7 +24,7 @@ header {
 
 .APheader {
   z-index: 100;
-  position: absolute;
+  position: fixed;
   place-content: center;
   display: flex;
   place-items: center;
@@ -64,7 +64,7 @@ header {
 
   .APheader {
     z-index: 100;
-    position: absolute;
+    position: fixed;
     place-content: center;
     display: flex;
     place-items: center;

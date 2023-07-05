@@ -16,10 +16,10 @@ interface AppConfig {
 const client = new ArchipelagoClient(props.serverInfo)
 let lastKnownScrollLocation = document.body.clientHeight
 let totalHeight = document.body.clientHeight
-const receivedItems = ref("")
 document.addEventListener("scroll", () => {
   lastKnownScrollLocation = window.scrollY + window.innerHeight
   lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation)
+  console.log(lastKnownScrollLocation)
 })
 const text = ref(["<span class='default'>Welcome</span>"])
 let connected = ref(false)
@@ -37,7 +37,7 @@ let credentials = {
       uuid: "8da62081-7213-4543-97f6-b54d40e2fe52",
       version: { major: 0, minor: 3, build: 7 },
       items_handling: ItemsHandlingFlags.REMOTE_ALL,
-      tags: ["TextOnly", "AP", "Mobile Text Client"]
+      tags: ["TextOnly", "Mobile Text Client"]
   };
 Connect();
 
@@ -147,15 +147,17 @@ function GetRoomInfo() {
   })
 }
 
-function changeHeight(el:any) {
-  if (totalHeight === lastKnownScrollLocation) {
-    window.scrollTo(0, Math.ceil(window.scrollY) + el.clientHeight)
+function changeHeight(el:any, index:number, length:number) {
+  console.log(Math.ceil(window.scrollY), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
+  if (((Math.ceil(window.scrollY) + totalHeight) + (el.clientHeight / 2) === lastKnownScrollLocation) && (index + 1 === length)) {
+    console.log('scrolled')
+    window.scrollTo(0, Math.ceil(window.scrollY) + el.clientHeight + totalHeight)
   }
 }
 </script>
 
 <template>
-<div v-if="connected" class="forloop" v-for="t in text" :ref="el => changeHeight(el)"> <span v-html = t></span></div>
+<div v-if="connected" class="forloop" v-for="(t, index) in text" :data="index" :ref="el => changeHeight(el, index, text.length)"><span v-html = t></span></div>
 </template>
 
 <style scoped>
