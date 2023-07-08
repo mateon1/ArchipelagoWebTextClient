@@ -29,7 +29,7 @@ const plusText = computed({
     text.value.splice(text.value.length, 1, val.toString())
   }
 })
-
+const inputText = ref("")
 
 let credentials = {
       name: props.slotName,
@@ -50,12 +50,13 @@ function Connect() {
       .then(() => {
           plusText.value = [`<span class="default">Connected to room with ${client.data.players.size} players.</span>`]
           connected.value = true;
-      }).then(() => {
-        
-      })
-      .catch(() => {
+      }).catch(() => {
         emit("authenticted", {err: "Couldn't connect for some reason", authenticate: false})
-        Disconnect()
+        client.disconnect()
+        connected.value = false
+        client.removeListener('printJSON', () => {})
+        client.removeListener('receivedItems', () => {})
+        client.removeListener('roomInfo', () => {})
       }) 
   if(connected) {
     console.log("connected")
@@ -73,7 +74,7 @@ function Disconnect() {
   client.removeListener('printJSON', () => {})
   client.removeListener('receivedItems', () => {})
   client.removeListener('roomInfo', () => {})
-  
+  emit("authenticted", {err: "Disconnected", authenticate: false})
 }
 function RecieveText() {
   console.log("text")
@@ -145,19 +146,44 @@ function GetRoomInfo() {
   client.addListener('roomInfo', (packet) => {
     console.log(packet)
   })
+  client.addListener('packetReceived', (packet) => {
+    console.log(packet)
+  })
+  client.addListener('retrieved', (packet) => {
+    console.log(packet)
+  })
+  client.addListener('roomUpdate', (packet) => {
+    console.log(packet)
+  })
 }
 
 function changeHeight(el:any, index:number, length:number) {
-  console.log(Math.ceil(window.scrollY), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
-  if (((Math.ceil(window.scrollY) + totalHeight) + (el.clientHeight / 2) === lastKnownScrollLocation) && (index + 1 === length)) {
-    console.log('scrolled')
-    window.scrollTo(0, Math.ceil(window.scrollY) + el.clientHeight + totalHeight)
+  if (el != null) {
+    // console.log(Math.ceil(window.scrollY), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
+    if (((Math.ceil(window.scrollY) + totalHeight) + (el.clientHeight / 2) === lastKnownScrollLocation) && (index + 1 === length)) {
+      console.log('scrolled')
+      window.scrollTo(0, Math.ceil(window.scrollY) + el.clientHeight + totalHeight)
+    }
   }
+}
+
+function sendText() {
+  console.log(inputText.value)
+  client.send({cmd: CommandPacketType.SAY, text: inputText.value})
 }
 </script>
 
 <template>
-<div v-if="connected" class="forloop" v-for="(t, index) in text" :data="index" :ref="el => changeHeight(el, index, text.length)"><span v-html = t></span></div>
+<div class="text_body">
+  <div v-if="connected" class="forloop" v-for="(t, index) in text" :data="index" :ref="el => changeHeight(el, index, text.length)"><span v-html = t></span></div>
+</div>
+<button class="disconnect_button" v-on:click="Disconnect()">Disconnect</button>
+
+<form onsubmit="return false;" class="chat_form">
+  <input type="text" name="Input Text" v-model="inputText"/>
+  <button v-on:click="sendText">Send</button>
+</form>
+
 </template>
 
 <style scoped>

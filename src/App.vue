@@ -30,31 +30,29 @@ function OnConnect() {
 </script>
 
 <template>
-  <header class="APheader">
+  <header class="ap_header">
     <button v-on:click="viewPage = 'itemRecieved'">Items Recieved</button>
     <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
     <button v-on:click="viewPage = 'Hints'">Show Hints</button>
   </header>
-  <div class="APbody">
-    <div class="wrapper" v-if="authenticate">
-      <div v-show="viewPage === 'textClient'">
+  <div class="ap_body">
+    <div v-if="authenticate">
+      <span v-show="viewPage === 'textClient'" class="wrapper" >
         <TextClient :slotName=inputName :serverInfo=inputServerInfo 
         @authenticted="(payload) => { authenticate = payload.authenticate; errorMessage = payload.err}"
         @onRecievedItemsChanged="(payload) => {receivedItems = payload;}"
           />
-      </div>
+      </span>
     </div>
-    <div v-show="!authenticate">
-      <div>
-        <input type="text" name="Server Info" placeholder="Server Info" v-model="inputServerInfo">
-      </div>
-      <div>
-        <input type="text" name="Slot" placeholder="Slot Name" v-model="inputName">
-      </div>
-      <div>
-        <button v-on:click="OnConnect">Connect</button>
-      </div>
-      <div>
+    <div v-show="!authenticate" class="connection_info">
+        <form onsubmit="return false;" class="server_info">
+          <input type="text" name="Server Info" placeholder="Server Info" v-model="inputServerInfo">
+          <input type="text" name="Slot" placeholder="Slot Name" v-model="inputName">
+          <div>
+            <button v-on:click="OnConnect">Connect</button>
+          </div>
+        </form>
+      <div class="error_message">
         <p>{{ errorMessage }}</p>
       </div>
     </div>

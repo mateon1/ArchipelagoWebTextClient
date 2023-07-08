@@ -2,8 +2,7 @@
 
 #app {
   max-width: 1280px;
-  margin: 0 auto;
-  
+  /* margin: 0 auto; */
   font-weight: normal;
 }
 
@@ -21,10 +20,23 @@ header {
   display: block;
   margin: 0 auto 2rem;
 }
+.text_body {
+  overflow: auto !important;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+.wrapper {
+  height: 75vh;
+  width: 100vw;
+  display: block;
+}
 
-.APheader {
+.ap_header {
   z-index: 100;
-  position: fixed;
+  position: relative;
   place-content: center;
   display: flex;
   place-items: center;
@@ -33,17 +45,30 @@ header {
   background: var(--color-background);
 }
 
-.APbody {
+.ap_body {
   display: flex;
   place-content: center;
-  height: 100vh;
+  height: auto;
   place-items: center;
   padding: 0 2rem;
   width: 100vw;
+  height: 75vh;
+}
+.server_info, .error_message {
+  display: grid;
+  place-content: center;
 }
 
-.APheader button {
+.ap_header button {
   height: 5vh;
+}
+.chat_form {
+  position: absolute;
+  bottom: -4vh;
+}
+.disconnect_button {
+  position: absolute;
+  bottom: -7vh;
 }
 @media (hover: hover) {
   a:hover {
@@ -60,9 +85,10 @@ header {
   #app {
     display: flex;
     width: 100vw;
+    max-width: 100vw;
   }
 
-  .APheader {
+  .ap_header {
     z-index: 100;
     position: fixed;
     place-content: center;
@@ -72,21 +98,25 @@ header {
     padding: 0 2rem;
   }
 
-  .APbody {
+  .ap_body {
     display: flex;
     place-content: center;
     height: 100vh;
     place-items: center;
     padding: 0 2rem;
     width: 100vw;
+    height: 80vh;
   }
 
   .logo {
     margin: 0 2rem 0 0;
   }
 
-  .APheader button {
+  .ap_header button {
     height: 5vh;
+  }
+  .wrapper {
+    height: 80vh;
   }
 
 }
