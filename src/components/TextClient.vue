@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS  } from "archipelago.js";
+import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS, PlayersManager } from "archipelago.js";
 import { computed, defineComponent, reactive, ref, inject, onMounted} from "vue";
 const props = defineProps<{
   slotName: string,
@@ -21,12 +21,11 @@ const connectionInfo = {
   game: '',
   name: props.slotName,
   items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
-  tags: ["TextOnly", "Mobile Text Client"]
+  tags: ["TextOnly"]
   
 }
 const game = ref('')
 let lastKnownScrollLocation = 0
-let totalHeight = document.body.clientHeight
 
 onMounted(() => {
   const element = document.getElementById("text_body")
@@ -47,6 +46,9 @@ const plusText = computed({
   get: () => text.value,
   set: (val) => {
     text.value.splice(text.value.length, 1, val.toString())
+    if (text.value.length >= 600) {
+      text.value.shift()
+    }
   }
 })
 const inputText = ref("")
@@ -68,7 +70,7 @@ function Connect() {
   client
       .connect(connectionInfo)
       .then(() => {
-          plusText.value = [`<span class="default">Connected to room with ${client.data.players.size} players.</span>`]
+          plusText.value = [`<span class="default">Connected to room with ${client.players.all.length - 1} players.</span>`]
           connected.value = true;
           // game = client.data.games.
       }).catch(() => {
@@ -116,23 +118,23 @@ function RecieveText() {
         case "item_id":
           // normal items
           if (text.flags === 0) {
-            word += `<span class="normalItem"> ${client.items.name(game.value, Number(text.text))}</span>`
+            word += `<span class="normalItem"> ${client.items.name(text.player, Number(text.text))}</span>`
           } 
           // trap items
           else if( text.flags === 4) {
-            word += `<span class="trapItem"> ${client.items.name(game.value, Number(text.text))}</span>`
+            word += `<span class="trapItem"> ${client.items.name(text.player, Number(text.text))}</span>`
           } 
           // progressive items
           else if( text.flags === 1) {
-            word += `<span class="progressiveItem"> ${client.items.name(game.value, Number(text.text))}</span>`
+            word += `<span class="progressiveItem"> ${client.items.name(text.player, Number(text.text))}</span>`
           } 
           // everything else.. aka useful items
           else {
-            word += `<span class="usefulItem"> ${client.items.name(game.value, Number(text.text))}</span>`
+            word += `<span class="usefulItem"> ${client.items.name(text.player, Number(text.text))}</span>`
           }
           break;
         case "location_id":
-          word += `<span class="location"> ${client.locations.name(game.value, Number(text.text))}</span>`
+          word += `<span class="location"> ${client.locations.name(text.player, Number(text.text))}</span>`
           break;
         case "color":
           word += `<span style="color: ${text.color}"> ${text.text}</span>`
@@ -145,7 +147,6 @@ function RecieveText() {
       }
     })
     plusText.value = [word];
-    totalHeight = document.body.clientHeight
   });
 }
 
@@ -188,12 +189,8 @@ function GetRoomInfo() {
 function changeHeight(el:any, index:number, length:number) {
   let element = document.getElementById("text_body")
   if (el != null && element != null) {
-    //console.log(Math.ceil(element.offsetHeight), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
     //console.log(Math.ceil(element.offsetHeight), element.scrollTop, lastKnownScrollLocation, element.scrollHeight)
     if (Math.ceil(element.scrollHeight) <= lastKnownScrollLocation) {
-      
-      //console.log('element scrolled')
-      //lastKnownScrollLocation = lastKnownScrollLocation + el.clientHeight
       element.scrollTo(0, element.scrollHeight + el.clientHeight)
       lastKnownScrollLocation += el.clientHeight
     }

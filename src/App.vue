@@ -56,7 +56,7 @@ function OnConnect() {
         <p>{{ errorMessage }}</p>
       </div>
     </div>
-    <div v-if="viewPage === 'itemRecieved'">
+    <div v-if="viewPage === 'itemRecieved'" class="wrapper">
       <ReceivedItems :receivedItems="receivedItems"/>
     </div>
   </div>

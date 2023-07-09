@@ -20,7 +20,7 @@ header {
   display: block;
   margin: 0 auto 2rem;
 }
-#text_body {
+#text_body, #received_body {
   overflow: auto !important;
   position: absolute;
   top: 0;
