@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS  } from "archipelago.js";
-import { computed, defineComponent, reactive, ref, inject} from "vue";
+import { computed, defineComponent, reactive, ref, inject, onMounted} from "vue";
 const props = defineProps<{
   slotName: string,
   serverInfo: string,
@@ -25,13 +25,22 @@ const connectionInfo = {
   
 }
 const game = ref('')
-let lastKnownScrollLocation = document.body.clientHeight
+let lastKnownScrollLocation = 0
 let totalHeight = document.body.clientHeight
-document.addEventListener("scroll", () => {
-  lastKnownScrollLocation = window.scrollY + window.innerHeight
-  lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation)
-  console.log(lastKnownScrollLocation)
+
+onMounted(() => {
+  const element = document.getElementById("text_body")
+  if (element) {
+    lastKnownScrollLocation = document.body.scrollHeight
+    element.addEventListener("scroll", () => {
+      lastKnownScrollLocation = element.scrollTop + element.offsetHeight
+      //console.log(element.scrollHeight, element.scrollTop, element.clientHeight, element.offsetHeight)
+      lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation)
+      //console.log(lastKnownScrollLocation)
+    })
+  }
 })
+
 const text = ref(["<span class='default'>Welcome</span>"])
 let connected = ref(false)
 const plusText = computed({
@@ -159,7 +168,7 @@ function GetRoomInfo() {
     console.log(packet)
   })
   client.addListener('PacketReceived', (packet) => {
-    console.log(packet)
+    //console.log(packet)
     if( packet.cmd === "Connected") {
       for (const key in packet.slot_info) {
         if (packet.slot_info[key].name === props.slotName) {
@@ -177,11 +186,16 @@ function GetRoomInfo() {
 }
 
 function changeHeight(el:any, index:number, length:number) {
-  if (el != null) {
-    // console.log(Math.ceil(window.scrollY), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
-    if (((Math.ceil(window.scrollY) + totalHeight) + (el.clientHeight / 2) === lastKnownScrollLocation) && (index + 1 === length)) {
-      console.log('scrolled')
-      window.scrollTo(0, Math.ceil(window.scrollY) + el.clientHeight + totalHeight)
+  let element = document.getElementById("text_body")
+  if (el != null && element != null) {
+    //console.log(Math.ceil(element.offsetHeight), el.clientHeight, lastKnownScrollLocation, totalHeight,index + 1, length)
+    //console.log(Math.ceil(element.offsetHeight), element.scrollTop, lastKnownScrollLocation, element.scrollHeight)
+    if (Math.ceil(element.scrollHeight) <= lastKnownScrollLocation) {
+      
+      //console.log('element scrolled')
+      //lastKnownScrollLocation = lastKnownScrollLocation + el.clientHeight
+      element.scrollTo(0, element.scrollHeight + el.clientHeight)
+      lastKnownScrollLocation += el.clientHeight
     }
   }
 }
@@ -193,7 +207,7 @@ function sendText() {
 </script>
 
 <template>
-<div class="text_body">
+<div id="text_body">
   <div v-if="connected" class="forloop" v-for="(t, index) in text" :data="index" :ref="el => changeHeight(el, index, text.length)"><span v-html = t></span></div>
 </div>
 <button class="disconnect_button" v-on:click="Disconnect()">Disconnect</button>
