@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArchipelagoClient, ClientStatus, CommandPacketType, ItemsHandlingFlags } from "archipelago.js";
+import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS  } from "archipelago.js";
 import { computed, defineComponent, reactive, ref, inject} from "vue";
 const props = defineProps<{
   slotName: string,
@@ -9,11 +9,22 @@ const emit = defineEmits <{
   (e: 'onRecievedItemsChanged', itemName: string[]): void
   (e: 'authenticted', authenticate: {err: string, authenticate: boolean}): void
 }>()
-console.log(props.slotName)
+const serverURI = props.serverInfo.split(':')
+console.log(serverURI[0])
 interface AppConfig {
-  globalClient: ArchipelagoClient
+  globalClient: Client
 }
-const client = new ArchipelagoClient(props.serverInfo)
+const client = new Client()
+const connectionInfo = {
+  hostname: serverURI[0],
+  port: Number(serverURI[1]),
+  game: '',
+  name: props.slotName,
+  items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
+  tags: ["TextOnly", "Mobile Text Client"]
+  
+}
+const game = ref('')
 let lastKnownScrollLocation = document.body.clientHeight
 let totalHeight = document.body.clientHeight
 document.addEventListener("scroll", () => {
@@ -31,14 +42,14 @@ const plusText = computed({
 })
 const inputText = ref("")
 
-let credentials = {
-      name: props.slotName,
-      game: '',
-      uuid: "8da62081-7213-4543-97f6-b54d40e2fe52",
-      version: { major: 0, minor: 3, build: 7 },
-      items_handling: ItemsHandlingFlags.REMOTE_ALL,
-      tags: ["TextOnly", "Mobile Text Client"]
-  };
+// let credentials = {
+//       name: props.slotName,
+//       game: '',
+//       uuid: "8da62081-7213-4543-97f6-b54d40e2fe52",
+//       version: { major: 0, minor: 3, build: 7 },
+//       items_handling: ItemsHandlingFlags.REMOTE_ALL,
+//       tags: ["TextOnly", "Mobile Text Client"]
+//   };
 Connect();
 
 
@@ -46,17 +57,18 @@ function Connect() {
     // Set up the AP client.
   // Connect to the Archipelago server.
   client
-      .connect(credentials)
+      .connect(connectionInfo)
       .then(() => {
           plusText.value = [`<span class="default">Connected to room with ${client.data.players.size} players.</span>`]
           connected.value = true;
+          // game = client.data.games.
       }).catch(() => {
         emit("authenticted", {err: "Couldn't connect for some reason", authenticate: false})
         client.disconnect()
         connected.value = false
-        client.removeListener('printJSON', () => {})
-        client.removeListener('receivedItems', () => {})
-        client.removeListener('roomInfo', () => {})
+        client.removeListener('PrintJSON', () => {})
+        client.removeListener('ReceivedItems', () => {})
+        client.removeListener('RoomInfo', () => {})
       }) 
   if(connected) {
     console.log("connected")
@@ -71,21 +83,21 @@ function Connect() {
 function Disconnect() {
   client.disconnect()
   connected.value = false
-  client.removeListener('printJSON', () => {})
-  client.removeListener('receivedItems', () => {})
-  client.removeListener('roomInfo', () => {})
+  client.removeListener('PrintJSON', () => {})
+  client.removeListener('ReceivedItems', () => {})
+  client.removeListener('RoomInfo', () => {})
   emit("authenticted", {err: "Disconnected", authenticate: false})
 }
 function RecieveText() {
   console.log("text")
   // Listen for packet events.
-  client.addListener("printJSON", (packet) => {
+  client.addListener("PrintJSON", (packet) => {
     let word = "";
     packet.data.forEach(text => {
       switch(text.type) {
         case "player_id":
           // word += client.players.name(Number(text.text));
-          if (client.players.name(Number(text.text)) === credentials.name) {
+          if (client.players.name(Number(text.text)) === connectionInfo.name) {
             word += `<span class="currentPlayer"> ${client.players.alias(Number(text.text))}</span>`
           }
           else {
@@ -95,23 +107,23 @@ function RecieveText() {
         case "item_id":
           // normal items
           if (text.flags === 0) {
-            word += `<span class="normalItem"> ${client.items.name(Number(text.text))}</span>`
+            word += `<span class="normalItem"> ${client.items.name(game.value, Number(text.text))}</span>`
           } 
           // trap items
           else if( text.flags === 4) {
-            word += `<span class="trapItem"> ${client.items.name(Number(text.text))}</span>`
+            word += `<span class="trapItem"> ${client.items.name(game.value, Number(text.text))}</span>`
           } 
           // progressive items
           else if( text.flags === 1) {
-            word += `<span class="progressiveItem"> ${client.items.name(Number(text.text))}</span>`
+            word += `<span class="progressiveItem"> ${client.items.name(game.value, Number(text.text))}</span>`
           } 
           // everything else.. aka useful items
           else {
-            word += `<span class="usefulItem"> ${client.items.name(Number(text.text))}</span>`
+            word += `<span class="usefulItem"> ${client.items.name(game.value, Number(text.text))}</span>`
           }
           break;
         case "location_id":
-          word += `<span class="location"> ${client.locations.name(Number(text.text))}</span>`
+          word += `<span class="location"> ${client.locations.name(game.value, Number(text.text))}</span>`
           break;
         case "color":
           word += `<span style="color: ${text.color}"> ${text.text}</span>`
@@ -129,12 +141,12 @@ function RecieveText() {
 }
 
 function RecievedItems() {
-  client.addListener('receivedItems', (packet) => {
+  client.addListener('ReceivedItems', (packet) => {
     let packetItems: string[] = []
     packet.items.forEach(i => {
-      console.log(client.items.name(i.item))
+      console.log(client.items.name(game.value, i.item))
       const id = i.item
-      const name = client.items.name(i.item)
+      const name = client.items.name(game.value, i.item)
       packetItems.push(name)
     })
     console.log(packetItems)
@@ -143,16 +155,23 @@ function RecievedItems() {
   
 }
 function GetRoomInfo() {
-  client.addListener('roomInfo', (packet) => {
+  client.addListener('RoomInfo', (packet) => {
     console.log(packet)
   })
-  client.addListener('packetReceived', (packet) => {
+  client.addListener('PacketReceived', (packet) => {
+    console.log(packet)
+    if( packet.cmd === "Connected") {
+      for (const key in packet.slot_info) {
+        if (packet.slot_info[key].name === props.slotName) {
+          game.value = packet.slot_info[key].game
+        }
+      }
+    }
+  })
+  client.addListener('Retrieved', (packet) => {
     console.log(packet)
   })
-  client.addListener('retrieved', (packet) => {
-    console.log(packet)
-  })
-  client.addListener('roomUpdate', (packet) => {
+  client.addListener('RoomUpdate', (packet) => {
     console.log(packet)
   })
 }
@@ -169,7 +188,7 @@ function changeHeight(el:any, index:number, length:number) {
 
 function sendText() {
   console.log(inputText.value)
-  client.send({cmd: CommandPacketType.SAY, text: inputText.value})
+  client.say(inputText.value)
 }
 </script>
 
