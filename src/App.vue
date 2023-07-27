@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import TextClient from './components/TextClient.vue'
-import ReceivedItems from './components/ReceivedItems.vue';
-import {provide, ref, computed} from 'vue'
-import { walkIdentifiers } from '@vue/compiler-core'
+import ReceivedItems from './components/ReceivedItems.vue'
+import ShowHints from './components/ShowHints.vue'
+import {provide, ref, computed, type Ref} from 'vue'
 const count = ref(0)
 const inputName = ref("SneakiRoR")
 const inputServerInfo = ref("archipelago.gg:53033")
 const authenticate = ref(false)
 const errorMessage = ref("")
 const viewPage = ref("")
-const receivedItems = ref([""])
+const arr: [{item: string, amount: number, type: number}] = [{item: '', amount: 0, type: 0}]
+const jsonData: [{word: string}]= [{word: ""}]
+const receivedItems = ref(arr)
+const receivedHints = ref(jsonData)
 const plusCount = computed({
   get: () => count.value,
   set: (val) => {
@@ -40,7 +43,8 @@ function OnConnect() {
       <span v-show="viewPage === 'textClient'" class="wrapper" >
         <TextClient :slotName=inputName :serverInfo=inputServerInfo 
         @authenticted="(payload) => { authenticate = payload.authenticate; errorMessage = payload.err}"
-        @onRecievedItemsChanged="(payload) => {receivedItems = payload;}"
+        @onRecievedItemsChanged="(payload) => receivedItems = payload"
+        @onRecievedHintChanged="(payload) => receivedHints = payload"
           />
       </span>
     </div>
@@ -58,6 +62,9 @@ function OnConnect() {
     </div>
     <div v-if="viewPage === 'itemRecieved'" class="wrapper">
       <ReceivedItems :receivedItems="receivedItems"/>
+    </div>
+    <div v-if="viewPage === 'Hints'" class="wrapper">
+      <ShowHints :receivedHints="receivedHints"/>
     </div>
   </div>
 

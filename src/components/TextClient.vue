@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS, PlayersManager } from "archipelago.js";
+import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS, PlayersManager, type JSONSerializableData } from "archipelago.js";
 import { computed, defineComponent, reactive, ref, inject, onMounted} from "vue";
 const props = defineProps<{
   slotName: string,
   serverInfo: string,
 }>()
 const emit = defineEmits <{
-  (e: 'onRecievedItemsChanged', itemName: string[]): void
-  (e: 'authenticted', authenticate: {err: string, authenticate: boolean}): void
+  (...args: [e: 'onRecievedItemsChanged', itemName: [{ item: string; amount: number; type: number;}]] | 
+  [e: 'authenticted', authenticate: { err: string; authenticate: boolean; }] | 
+  [e: 'onRecievedHintChanged', hints: [{word: string}]]): void;
 }>()
 const serverURI = props.serverInfo.split(':')
 console.log(serverURI[0])
-interface AppConfig {
-  globalClient: Client
-}
+
 const client = new Client()
 const connectionInfo = {
   hostname: serverURI[0],
@@ -152,13 +151,26 @@ function RecieveText() {
 
 function RecievedItems() {
   client.addListener('ReceivedItems', (packet) => {
-    let packetItems: string[] = []
+    console.log(packet)
+    let packetItems: [{item:string, amount:number, type:number}] = [{item: '', amount: 0, type: 0}]
     packet.items.forEach(i => {
-      console.log(client.items.name(game.value, i.item))
-      const id = i.item
-      const name = client.items.name(game.value, i.item)
-      packetItems.push(name)
+      // console.log(client.items.name(game.value, i.item))
+      const id: number = i.item
+      const name: string = client.items.name(game.value, i.item)
+      let noItems: boolean = true
+      for(let k = 0; k < packetItems.length; k++) {
+        if(name === packetItems[k].item) {
+          packetItems[k].amount += 1
+          noItems = false
+          break;          
+        }
+      }
+      if(noItems) {
+        packetItems.push({item: name, amount: 1, type: i.flags})
+      }
+      
     })
+    packetItems.splice(0,1)
     console.log(packetItems)
     emit("onRecievedItemsChanged", packetItems)
   })
@@ -169,17 +181,27 @@ function GetRoomInfo() {
     console.log(packet)
   })
   client.addListener('PacketReceived', (packet) => {
-    //console.log(packet)
+    console.log(packet)
     if( packet.cmd === "Connected") {
       for (const key in packet.slot_info) {
         if (packet.slot_info[key].name === props.slotName) {
           game.value = packet.slot_info[key].game
         }
       }
+    } else if( packet.cmd === "SetReply") {
+      let player, hintArray: any
+      parseText(packet.value)
     }
   })
   client.addListener('Retrieved', (packet) => {
-    console.log(packet)
+    let player, hintArray: any
+    for (player in packet.keys) {
+      hintArray = packet.keys[player]     
+    }
+    if(hintArray) {
+      updateHints(hintArray)
+      parseText(hintArray)
+    }
   })
   client.addListener('RoomUpdate', (packet) => {
     console.log(packet)
@@ -196,7 +218,63 @@ function changeHeight(el:any, index:number, length:number) {
     }
   }
 }
+function updateHints(hint:JSONSerializableData) {
+  let player, hintArray: any
+    console.log(hint)
+    //emit("onRecievedHintChanged", hint)
+}
+function parseText(data: any) {
+  let word = "";
+  let hint: [{word:string}]= [{word: ""}]
+  console.log(data)
+  let hintCollection = [{}]
+  data.forEach((text: any) => {
+    word = ""
+    console.log(text)
+    word += `<span class="default"> [${text.class}]: </span>`
+    if (client.players.name(Number(text.receiving_player)) === connectionInfo.name) {
+      word += `<span class="currentPlayer"> ${client.players.alias(Number(text.receiving_player))}</span>`
+    }
+    else {
+      word += `<span class="otherPlayer"> ${client.players.alias(Number(text.receiving_player))}</span>`
+    }
+    word += "<span class=default>'s </span>"
+    if (text.item_flags === 0) {
+      word += `<span class="normalItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
+    } 
+    // trap items
+    else if( text.item_flags === 4) {
+      word += `<span class="trapItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
+    } 
+    // progressive items
+    else if( text.item_flags === 1) {
+      word += `<span class="progressiveItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
+    } 
+    // everything else.. aka useful items
+    else {
+      word += `<span class="usefulItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
+    }
+    word += "<span class=default> is at </span>"
+    word += `<span class="location"> ${client.locations.name(text.finding_player, Number(text.location))}</span>`
+    word += `<span class="default"> in </span>`
+    if (client.players.name(Number(text.finding_player)) === connectionInfo.name) {
+      word += `<span class="currentPlayer"> ${client.players.alias(Number(text.finding_player))}</span>`
+    }
+    else {
+      word += `<span class="otherPlayer"> ${client.players.alias(Number(text.finding_player))}</span>`
+    }
+    word += `<span class="default">'s World </span>`
+    if (text.found) {
+      word += `<span style="color: green"> (found) </span>`
+    } else {
+      word += `<span style="color: red"> (not found) </span> \n`
+    }
 
+
+    hint.push({word: word})
+  })
+  emit("onRecievedHintChanged", hint)
+}
 function sendText() {
   console.log(inputText.value)
   client.say(inputText.value)
@@ -217,31 +295,30 @@ function sendText() {
 </template>
 
 <style scoped>
-
-:deep(.currentPlayer) {
-  color: var(--ap-magenta)
+:deep(.currentPlayer), .currentPlayer {
+  color: var(--ap-magenta);
 }
-
-:deep(.otherPlayer) {
-  color: var(--ap-yellow)
+:deep(.otherPlayer), .otherPlayer {
+  color: var(--ap-yellow);
 }
-:deep(.location) {
-  color: var(--ap-green)
+:deep(.location), .location {
+  color: var(--ap-green);
 }
-:deep(.default) {
-  color: var(--ap-white)
+:deep(.default), .default {
+  color: var(--ap-white);
+  white-space: pre-line;
 }
-:deep(.normalItem) {
-  color: var(--ap-cyan)
+:deep(.normalItem), .normalItem {
+  color: var(--ap-cyan);
 }
-:deep(.trapItem) {
-  color: var(--ap-salmon)
+:deep(.trapItem), .trapItem {
+  color: var(--ap-salmon);
 }
-:deep(.progressiveItem) {
-  color: var(--ap-plum)
+:deep(.progressiveItem), .progressiveItem {
+  color: var(--ap-plum);
 }
-:deep(.usefulItem) {
-  color: var(--ap-slateblue)
+:deep(.usefulItem), .usefulItem {
+  color: var(--ap-slateblue);
 }
 html {
   scroll-behavior: smooth;
