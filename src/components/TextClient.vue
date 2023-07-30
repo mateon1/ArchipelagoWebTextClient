@@ -1,62 +1,69 @@
+<!-- eslint-disable prettier/prettier -->
 <script setup lang="ts">
-import { Client, SERVER_PACKET_TYPE, ITEMS_HANDLING_FLAGS, PlayersManager, type JSONSerializableData } from "archipelago.js";
-import { computed, defineComponent, reactive, ref, inject, onMounted} from "vue";
+import getItemType from "../helpers/GetItemTypeHelper"
+import {
+  Client,
+  ITEMS_HANDLING_FLAGS,
+  type JSONSerializableData,
+} from "archipelago.js";
+import { computed, ref, onMounted } from "vue";
 const props = defineProps<{
-  slotName: string,
-  serverInfo: string,
+  slotName: string;
+  serverInfo: string;
   itemType: {
-    progression: string,
-    useful: string,
-    filler: string,
-    trap: string
+    progression: string;
+    useful: string;
+    filler: string;
+    trap: string;
   }
 }>()
+console.log(getItemType(1))
 const emit = defineEmits <{
   (...args: [e: 'onRecievedItemsChanged', itemName: [{ item: string; amount: number; type: number;}]] | 
   [e: 'authenticted', authenticate: { err: string; authenticate: boolean; }] | 
   [e: 'onRecievedHintChanged', hints: [{word: string}]]): void;
 }>()
-const serverURI = props.serverInfo.split(':')
-console.log(serverURI[0])
+const serverURI = props.serverInfo.split(":");
+console.log(serverURI[0]);
 
-const client = new Client()
+const client = new Client();
 const connectionInfo = {
   hostname: serverURI[0],
   port: Number(serverURI[1]),
-  game: '',
+  game: "",
   name: props.slotName,
   items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
-  tags: ["TextOnly"]
+  tags: ["TextOnly"],
   
 }
 const game = ref('')
-let lastKnownScrollLocation = 0
+let lastKnownScrollLocation = 0;
 
 onMounted(() => {
-  const element = document.getElementById("text_body")
+  const element = document.getElementById("text_body");
   if (element) {
-    lastKnownScrollLocation = document.body.scrollHeight
+    lastKnownScrollLocation = document.body.scrollHeight;
     element.addEventListener("scroll", () => {
-      lastKnownScrollLocation = element.scrollTop + element.offsetHeight
+      lastKnownScrollLocation = element.scrollTop + element.offsetHeight;
       //console.log(element.scrollHeight, element.scrollTop, element.clientHeight, element.offsetHeight)
-      lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation)
+      lastKnownScrollLocation = Math.ceil(lastKnownScrollLocation);
       //console.log(lastKnownScrollLocation)
     })
   }
 })
 
-const text = ref(["<span class='default'>Welcome</span>"])
+const text = ref(["<span class='default'>Welcome</span>"]);
 let connected = ref(false)
 const plusText = computed({
   get: () => text.value,
   set: (val) => {
-    text.value.splice(text.value.length, 1, val.toString())
+    text.value.splice(text.value.length, 1, val.toString());
     if (text.value.length >= 600) {
-      text.value.shift()
+      text.value.shift();
     }
   }
 })
-const inputText = ref("")
+const inputText = ref("");
 
 // let credentials = {
 //       name: props.slotName,
@@ -73,59 +80,61 @@ function Connect() {
     // Set up the AP client.
   // Connect to the Archipelago server.
   client
-      .connect(connectionInfo)
-      .then(() => {
-          plusText.value = [`<span class="default">Connected to room with ${client.players.all.length - 1} players.</span>`]
-          connected.value = true;
-          // game = client.data.games.
-      }).catch(() => {
-        emit("authenticted", {err: "Couldn't connect for some reason", authenticate: false})
-        client.disconnect()
-        connected.value = false
-        client.removeListener('PrintJSON', () => {})
-        client.removeListener('ReceivedItems', () => {})
-        client.removeListener('RoomInfo', () => {})
-      }) 
-  if(connected) {
-    console.log("connected")
-    RecieveText()
-    RecievedItems()
-    GetRoomInfo()
-  } else {
-    console.log("failed to connect")
-  }
+    .connect(connectionInfo)
+    .then(() => {
+      plusText.value = [
+        `<span class="default">Connected to room with ${
+          client.players.all.length - 1
+        } players.</span>`,
+      ];
+      connected.value = true;
+      RecieveText()
+      RecievedItems()
+      GetRoomInfo()
+        // game = client.data.games.
+    })
+    .catch(() => {
+      emit("authenticted", {
+        err: "Couldn't connect for some reason",
+        authenticate: false,
+      });
+      client.disconnect()
+      connected.value = false;
+      client.removeListener("PrintJSON", () => {});
+      client.removeListener("ReceivedItems", () => {});
+      client.removeListener("RoomInfo", () => {});
+    })
+  console.log(connected.value);
+  console.log("connected");
 }
 
 function Disconnect() {
   client.disconnect()
   connected.value = false
-  client.removeListener('PrintJSON', () => {})
-  client.removeListener('ReceivedItems', () => {})
-  client.removeListener('RoomInfo', () => {})
-  emit("authenticted", {err: "Disconnected", authenticate: false})
+  client.removeListener("PrintJSON", () => {});
+  client.removeListener("ReceivedItems", () => {});
+  client.removeListener("RoomInfo", () => {});
+  emit("authenticted", { err: "Disconnected", authenticate: false });
 }
-function getItemType(flag:number) {
-  switch(flag) {
-    case 1:
-      return props.itemType.progression
-      break
-    case 2:
-      return props.itemType.useful
-      break
-    case 4:
-      return props.itemType.trap
-      break
-    default:
-      return props.itemType.filler
-  }
-}
+// function getItemType(flag:number) {
+//   switch (flag) {
+//     case 1:
+//       return props.itemType.progression;
+//     case 2:
+//       return props.itemType.useful;
+//     case 4:
+//       return props.itemType.trap;
+//     default:
+//       return props.itemType.filler;
+//   }
+// }
 function RecieveText() {
   console.log("text")
   // Listen for packet events.
   client.addListener("PrintJSON", (packet) => {
     let word = "";
-    packet.data.forEach(text => {
-      switch(text.type) {
+    packet.data.forEach((text) => {
+      switch (text.type) {
         case "player_id":
           // word += client.players.name(Number(text.text));
           if (client.players.name(Number(text.text)) === connectionInfo.name) {
@@ -146,6 +155,7 @@ function RecieveText() {
           break;
         case "entrance_name":
           word += `<span class="entrance"> ${text.text}</span>`
+          break;
         default:
           word += `<span class="default"> ${text.text} </span>`
           break;
@@ -161,7 +171,6 @@ function RecievedItems() {
     let packetItems: [{item:string, amount:number, type:number}] = [{item: '', amount: 0, type: 0}]
     packet.items.forEach(i => {
       // console.log(client.items.name(game.value, i.item))
-      const id: number = i.item
       const name: string = client.items.name(game.value, i.item)
       let noItems: boolean = true
       for(let k = 0; k < packetItems.length; k++) {
@@ -214,7 +223,7 @@ function GetRoomInfo() {
   })
 }
 
-function changeHeight(el:any, index:number, length:number) {
+function changeHeight(el:any) {
   let element = document.getElementById("text_body")
   if (el != null && element != null) {
     //console.log(Math.ceil(element.offsetHeight), element.scrollTop, lastKnownScrollLocation, element.scrollHeight)
@@ -225,7 +234,6 @@ function changeHeight(el:any, index:number, length:number) {
   }
 }
 function updateHints(hint:JSONSerializableData) {
-  let player, hintArray: any
     console.log(hint)
     //emit("onRecievedHintChanged", hint)
 }
@@ -233,7 +241,6 @@ function parseText(data: any) {
   let word = "";
   let hint: [{word:string}]= [{word: ""}]
   console.log(data)
-  let hintCollection = [{}]
   data.forEach((text: any) => {
     word = ""
     word += `<span class="default"> [${text.class}]: </span>`
@@ -273,16 +280,27 @@ function sendText() {
 </script>
 
 <template>
-<div id="text_body">
-  <div v-if="connected" class="forloop" v-for="(t, index) in text" :data="index" :ref="el => changeHeight(el, index, text.length)"><span v-html = t></span></div>
-</div>
-<button class="disconnect_button" v-on:click="Disconnect()">Disconnect</button>
+  <div id="text_body">
+    <span v-if="connected">
+      <div
+        class="forloop"
+        v-for="(t, index) in text"
+        :key="t"
+        :data="index"
+        :ref="(el) => changeHeight(el)"
+      >
+        <span v-html="t"></span>
+      </div>
+    </span>
+  </div>
+  <button class="disconnect_button" v-on:click="Disconnect()">
+    Disconnect
+  </button>
 
-<form onsubmit="return false;" class="chat_form">
-  <input type="text" name="Input Text" v-model="inputText"/>
-  <button v-on:click="sendText">Send</button>
-</form>
-
+  <form onsubmit="return false;" class="chat_form">
+    <input type="text" name="Input Text" v-model="inputText" />
+    <button v-on:click="sendText">Send</button>
+  </form>
 </template>
 
 <style scoped>
