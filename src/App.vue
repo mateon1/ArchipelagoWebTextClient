@@ -1,35 +1,32 @@
 <script setup lang="ts">
-import TextClient from './components/TextClient.vue'
-import ReceivedItems from './components/ReceivedItems.vue'
-import ShowHints from './components/ShowHints.vue'
-import {provide, ref, computed, type Ref} from 'vue'
-const count = ref(0)
-const inputName = ref("SneakiRoR")
-const inputServerInfo = ref("archipelago.gg:53033")
-const authenticate = ref(false)
-const errorMessage = ref("")
-const viewPage = ref("")
-const arr: [{item: string, amount: number, type: number}] = [{item: '', amount: 0, type: 0}]
-const jsonData: [{word: string}]= [{word: ""}]
-const receivedItems = ref(arr)
-const receivedHints = ref(jsonData)
-const plusCount = computed({
-  get: () => count.value,
-  set: (val) => {
-    count.value = val
-  }
-})
-provide('count', count)
+  import TextClient from './components/TextClient.vue'
+  import ReceivedItems from './components/ReceivedItems.vue'
+  import ShowHints from './components/ShowHints.vue'
+  import {provide, ref, computed, type Ref} from 'vue'
 
-for (let i = 0; i < 8; i++) {
-  setTimeout(() => {
-    plusCount.value += 1
-  }, 1000 * i)
-}
-function OnConnect() {
-  authenticate.value = true
-  errorMessage.value = ""
-}
+  const inputName = ref("SneakiRoR")
+  const inputServerInfo = ref("archipelago.gg:53033")
+  const authenticate = ref(false)
+  const errorMessage = ref("")
+  const viewPage = ref("")
+  const arr: [{item: string, amount: number, type: number}] = [{item: '', amount: 0, type: 0}]
+  const jsonData: [{word: string}]= [{word: ""}]
+  const receivedItems = ref(arr)
+  const receivedHints = ref(jsonData)
+
+  const itemClassification = {
+    progression: 'progressiveItem',
+    useful: 'usefulItem',
+    filler: 'normalItem',
+    trap: 'trapItem'
+  }
+
+  function OnConnect() {
+    authenticate.value = true
+    errorMessage.value = ""
+    viewPage.value = 'textClient'
+  }
+
 </script>
 
 <template>
@@ -41,7 +38,7 @@ function OnConnect() {
   <div class="ap_body">
     <div v-if="authenticate">
       <span v-show="viewPage === 'textClient'" class="wrapper" >
-        <TextClient :slotName=inputName :serverInfo=inputServerInfo 
+        <TextClient :slotName=inputName :serverInfo=inputServerInfo :item-type=itemClassification
         @authenticted="(payload) => { authenticate = payload.authenticate; errorMessage = payload.err}"
         @onRecievedItemsChanged="(payload) => receivedItems = payload"
         @onRecievedHintChanged="(payload) => receivedHints = payload"
@@ -61,7 +58,7 @@ function OnConnect() {
       </div>
     </div>
     <div v-if="viewPage === 'itemRecieved'" class="wrapper">
-      <ReceivedItems :receivedItems="receivedItems"/>
+      <ReceivedItems :receivedItems="receivedItems" :item-type="itemClassification"/>
     </div>
     <div v-if="viewPage === 'Hints'" class="wrapper">
       <ShowHints :receivedHints="receivedHints"/>

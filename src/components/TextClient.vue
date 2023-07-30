@@ -4,6 +4,12 @@ import { computed, defineComponent, reactive, ref, inject, onMounted} from "vue"
 const props = defineProps<{
   slotName: string,
   serverInfo: string,
+  itemType: {
+    progression: string,
+    useful: string,
+    filler: string,
+    trap: string
+  }
 }>()
 const emit = defineEmits <{
   (...args: [e: 'onRecievedItemsChanged', itemName: [{ item: string; amount: number; type: number;}]] | 
@@ -98,6 +104,21 @@ function Disconnect() {
   client.removeListener('RoomInfo', () => {})
   emit("authenticted", {err: "Disconnected", authenticate: false})
 }
+function getItemType(flag:number) {
+  switch(flag) {
+    case 1:
+      return props.itemType.progression
+      break
+    case 2:
+      return props.itemType.useful
+      break
+    case 4:
+      return props.itemType.trap
+      break
+    default:
+      return props.itemType.filler
+  }
+}
 function RecieveText() {
   console.log("text")
   // Listen for packet events.
@@ -115,22 +136,7 @@ function RecieveText() {
           }
           break;
         case "item_id":
-          // normal items
-          if (text.flags === 0) {
-            word += `<span class="normalItem"> ${client.items.name(text.player, Number(text.text))}</span>`
-          } 
-          // trap items
-          else if( text.flags === 4) {
-            word += `<span class="trapItem"> ${client.items.name(text.player, Number(text.text))}</span>`
-          } 
-          // progressive items
-          else if( text.flags === 1) {
-            word += `<span class="progressiveItem"> ${client.items.name(text.player, Number(text.text))}</span>`
-          } 
-          // everything else.. aka useful items
-          else {
-            word += `<span class="usefulItem"> ${client.items.name(text.player, Number(text.text))}</span>`
-          }
+          word += `<span class="${getItemType(text.flags)}"> ${client.items.name(text.player, Number(text.text))}</span>`
           break;
         case "location_id":
           word += `<span class="location"> ${client.locations.name(text.player, Number(text.text))}</span>`
@@ -161,6 +167,7 @@ function RecievedItems() {
       for(let k = 0; k < packetItems.length; k++) {
         if(name === packetItems[k].item) {
           packetItems[k].amount += 1
+          packetItems[k].type = i.flags 
           noItems = false
           break;          
         }
@@ -189,7 +196,6 @@ function GetRoomInfo() {
         }
       }
     } else if( packet.cmd === "SetReply") {
-      let player, hintArray: any
       parseText(packet.value)
     }
   })
@@ -230,7 +236,6 @@ function parseText(data: any) {
   let hintCollection = [{}]
   data.forEach((text: any) => {
     word = ""
-    console.log(text)
     word += `<span class="default"> [${text.class}]: </span>`
     if (client.players.name(Number(text.receiving_player)) === connectionInfo.name) {
       word += `<span class="currentPlayer"> ${client.players.alias(Number(text.receiving_player))}</span>`
@@ -239,21 +244,7 @@ function parseText(data: any) {
       word += `<span class="otherPlayer"> ${client.players.alias(Number(text.receiving_player))}</span>`
     }
     word += "<span class=default>'s </span>"
-    if (text.item_flags === 0) {
-      word += `<span class="normalItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
-    } 
-    // trap items
-    else if( text.item_flags === 4) {
-      word += `<span class="trapItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
-    } 
-    // progressive items
-    else if( text.item_flags === 1) {
-      word += `<span class="progressiveItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
-    } 
-    // everything else.. aka useful items
-    else {
-      word += `<span class="usefulItem"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
-    }
+    word += `<span class="${getItemType(text.item_flags)}"> ${client.items.name(text.receiving_player, Number(text.item))}</span>`
     word += "<span class=default> is at </span>"
     word += `<span class="location"> ${client.locations.name(text.finding_player, Number(text.location))}</span>`
     word += `<span class="default"> in </span>`
@@ -295,29 +286,29 @@ function sendText() {
 </template>
 
 <style scoped>
-:deep(.currentPlayer), .currentPlayer {
+:deep(.currentPlayer) {
   color: var(--ap-magenta);
 }
-:deep(.otherPlayer), .otherPlayer {
+:deep(.otherPlayer) {
   color: var(--ap-yellow);
 }
-:deep(.location), .location {
+:deep(.location) {
   color: var(--ap-green);
 }
-:deep(.default), .default {
+:deep(.default) {
   color: var(--ap-white);
   white-space: pre-line;
 }
-:deep(.normalItem), .normalItem {
+:deep(.normalItem) {
   color: var(--ap-cyan);
 }
-:deep(.trapItem), .trapItem {
+:deep(.trapItem) {
   color: var(--ap-salmon);
 }
-:deep(.progressiveItem), .progressiveItem {
+:deep(.progressiveItem) {
   color: var(--ap-plum);
 }
-:deep(.usefulItem), .usefulItem {
+:deep(.usefulItem) {
   color: var(--ap-slateblue);
 }
 html {
