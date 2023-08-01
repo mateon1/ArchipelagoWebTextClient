@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import TextClient from './components/TextClient.vue'
+import TextClient from "./components/TextClient.vue";
   import ReceivedItems from './components/ReceivedItems.vue'
   import ShowHints from './components/ShowHints.vue'
   import {provide, ref, computed, type Ref} from 'vue'
 
   const inputName = ref("SneakiRoR")
-  const inputServerInfo = ref("archipelago.gg:53033")
+const inputServerInfo = ref("archipelago.gg:53033");
   const authenticate = ref(false)
   const errorMessage = ref("")
   const viewPage = ref("")
