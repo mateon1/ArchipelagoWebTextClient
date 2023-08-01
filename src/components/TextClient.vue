@@ -9,8 +9,8 @@ import { computed, ref, onMounted } from "vue";
 const props = defineProps<{
   slotName: string;
   serverInfo: string;
-}>()
-console.log(getItemType(1))
+}>();
+console.log(getItemType(1));
 const emit = defineEmits<{
   (
     ...args:
