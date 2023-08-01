@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import getItemType from "../helpers/GetItemTypeHelper"
+import getItemType from "../helpers/GetItemTypeHelper";
 import {
   Client,
   ITEMS_HANDLING_FLAGS,
@@ -54,7 +54,7 @@ onMounted(() => {
 });
 
 const text = ref(["<span class='default'>Welcome</span>"]);
-let connected = ref(false)
+let connected = ref(false);
 const plusText = computed({
   get: () => text.value,
   set: (val) => {
@@ -89,12 +89,12 @@ function Connect() {
         err: "Couldn't connect for some reason",
         authenticate: false,
       });
-      client.disconnect()
+      client.disconnect();
       connected.value = false;
       client.removeListener("PrintJSON", () => {});
       client.removeListener("ReceivedItems", () => {});
       client.removeListener("RoomInfo", () => {});
-    })
+    });
   RecieveText();
   RecievedItems();
   GetRoomInfo();
@@ -138,30 +138,30 @@ function RecieveText() {
           )}</span>`;
           break;
         case "color":
-          word += `<span style="color: ${text.color}"> ${text.text}</span>`
+          word += `<span style="color: ${text.color}"> ${text.text}</span>`;
           break;
         case "entrance_name":
-          word += `<span class="entrance"> ${text.text}</span>`
+          word += `<span class="entrance"> ${text.text}</span>`;
           break;
         default:
-          word += `<span class="default"> ${text.text} </span>`
+          word += `<span class="default"> ${text.text} </span>`;
           break;
       }
-    })
+    });
     plusText.value = [word];
   });
 }
 
 function RecievedItems() {
   client.addListener("ReceivedItems", (packet) => {
-    console.log(packet)
+    console.log(packet);
     let packetItems: [{ item: string; amount: number; type: number }] = [
       { item: "", amount: 0, type: 0 },
     ];
     packet.items.forEach((i) => {
       // console.log(client.items.name(game.value, i.item))
       const name: string = client.items.name(game.value, i.item);
-      let noItems: boolean = true
+      let noItems: boolean = true;
       for (let k = 0; k < packetItems.length; k++) {
         if (name === packetItems[k].item) {
           packetItems[k].amount += 1;
@@ -181,10 +181,10 @@ function RecievedItems() {
 }
 function GetRoomInfo() {
   client.addListener("RoomInfo", (packet) => {
-    console.log(packet)
-  })
+    console.log(packet);
+  });
   client.addListener("PacketReceived", (packet) => {
-    console.log(packet)
+    console.log(packet);
     if (packet.cmd === "Connected") {
       for (const key in packet.slot_info) {
         if (packet.slot_info[key].name === props.slotName) {
@@ -196,7 +196,7 @@ function GetRoomInfo() {
     }
   });
   client.addListener("Retrieved", (packet) => {
-    let player, hintArray: any
+    let player, hintArray: any;
     for (player in packet.keys) {
       hintArray = packet.keys[player];
     }
@@ -204,10 +204,10 @@ function GetRoomInfo() {
       updateHints(hintArray);
       parseText(hintArray);
     }
-  })
+  });
   client.addListener("RoomUpdate", (packet) => {
     console.log(packet);
-  })
+  });
 }
 
 function changeHeight(el: any) {
@@ -228,7 +228,7 @@ function parseText(data: any) {
   let word = "";
   let hint: [{ word: string }] = [{ word: "" }];
   data.forEach((text: any) => {
-    word = ""
+    word = "";
     word += `<span class="default"> [${text.class}]: </span>`;
     if (
       client.players.name(Number(text.receiving_player)) === connectionInfo.name
@@ -282,7 +282,7 @@ function sendText() {
   <div id="text_body">
     <span v-if="connected">
       <div
-        class="forloop"
+        class="text_loop"
         v-for="(t, index) in text"
         :key="t"
         :data="index"

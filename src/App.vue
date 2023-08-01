@@ -31,7 +31,7 @@ function OnConnect() {
   </header>
   <div class="ap_body">
     <div v-if="authenticate">
-      <span v-show="viewPage === 'textClient'" class="wrapper" >
+      <span v-show="viewPage === 'textClient'" class="wrapper">
         <TextClient
           :slotName="inputName"
           :serverInfo="inputServerInfo"
@@ -72,7 +72,7 @@ function OnConnect() {
       <ReceivedItems :receivedItems="receivedItems" />
     </div>
     <div v-if="viewPage === 'Hints'" class="wrapper">
-      <ShowHints :receivedHints="receivedHints"/>
+      <ShowHints :receivedHints="receivedHints" />
     </div>
   </div>
 

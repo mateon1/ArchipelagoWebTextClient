@@ -28,6 +28,12 @@ header {
   right: 0;
   left: 0;
 }
+.text_loop, .received_items, .received_hints {
+  border-bottom: 1px solid #3c3a3a;
+}
+.text_loop span, .received_hints span, .received_items span {
+  word-wrap: break-word;
+}
 .wrapper {
   height: 75vh;
   width: 100vw;
@@ -97,13 +103,13 @@ header {
   color: var(--ap-slateblue);
 }
 
-.receivedItems {
-  columns: 2 auto
+.received_items {
+  columns: 2 auto;
 }
-.receivedItems span {
+.received_items span {
   display: block;
 }
-.receivedItems .default {
+.received_items .default {
   text-align: center;
 }
 @media (hover: hover) {
@@ -154,5 +160,7 @@ header {
   .wrapper {
     height: 80vh;
   }
-
+  .text_loop, .received_items, .received_hints {
+    border-bottom: 0px;
+  }
 }
