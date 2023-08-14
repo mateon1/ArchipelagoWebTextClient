@@ -126,7 +126,7 @@ function RecieveText() {
   client.addListener("PrintJSON", (packet) => {
     let word = "";
     if (text.value.length >= 500) {
-      text.value.shift();
+      text.value.splice(0, 20);
     }
     console.log(text.value.length + " length");
     packet.data.forEach((text) => {
@@ -164,7 +164,6 @@ function RecieveText() {
           break;
       }
     });
-    console.log(word);
     plusText.value = [word];
   });
 }
