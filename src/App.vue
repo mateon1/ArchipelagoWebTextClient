@@ -30,6 +30,9 @@ function OnConnect() {
       <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
       <button v-on:click="viewPage = 'Hints'">Show Hints</button>
     </span>
+    <span v-else>
+      <H1>AP Web Text Client</H1>
+    </span>
   </header>
   <div class="ap_body">
     <div v-if="authenticate">
