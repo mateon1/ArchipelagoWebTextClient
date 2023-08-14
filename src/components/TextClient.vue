@@ -11,19 +11,34 @@ const props = defineProps<{
   serverInfo: string;
 }>();
 console.log(getItemType(1));
+// const emit = defineEmits<{
+//   (
+//     ...args:
+//       | [
+//           e: "onRecievedItemsChanged",
+//           itemName: [{ item: string; amount: number; type: number }]
+//         ]
+//       | [
+//           e: "authenticated",
+//           authenticate: { err: string; authenticate: boolean }
+//         ]
+//       | [e: "onRecievedHintChanged", hints: [{ word: string }]]
+//   ): void;
+// }>();
+// const emit = defineEmits<{
+//   (e: "change", id: number): void;
+//   (e: "update", value: string): void;
+// }>();
 const emit = defineEmits<{
   (
-    ...args:
-      | [
-          e: "onRecievedItemsChanged",
-          itemName: [{ item: string; amount: number; type: number }]
-        ]
-      | [
-          e: "authenticted",
-          authenticate: { err: string; authenticate: boolean }
-        ]
-      | [e: "onRecievedHintChanged", hints: [{ word: string }]]
+    e: "onRecievedItemsChanged",
+    itemName: [{ item: string; amount: number; type: number }]
   ): void;
+  (
+    e: "authenticated",
+    authenticate: { err: string; authenticate: boolean }
+  ): void;
+  (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
 }>();
 const serverURI = props.serverInfo.split(":");
 console.log(serverURI[0]);
@@ -59,9 +74,6 @@ const plusText = computed({
   get: () => text.value,
   set: (val) => {
     text.value.splice(text.value.length, 1, val.toString());
-    if (text.value.length >= 500) {
-      text.value.shift();
-    }
   },
 });
 const inputText = ref("");
@@ -85,7 +97,7 @@ function Connect() {
       // game = client.data.games.
     })
     .catch(() => {
-      emit("authenticted", {
+      emit("authenticated", {
         err: "Couldn't connect for some reason",
         authenticate: false,
       });
@@ -106,13 +118,17 @@ function Disconnect() {
   client.removeListener("PrintJSON", () => {});
   client.removeListener("ReceivedItems", () => {});
   client.removeListener("RoomInfo", () => {});
-  emit("authenticted", { err: "Disconnected", authenticate: false });
+  emit("authenticated", { err: "Disconnected", authenticate: false });
 }
 function RecieveText() {
   console.log("text");
   // Listen for packet events.
   client.addListener("PrintJSON", (packet) => {
     let word = "";
+    if (text.value.length >= 500) {
+      text.value.shift();
+    }
+    console.log(text.value.length + " length");
     packet.data.forEach((text) => {
       switch (text.type) {
         case "player_id":
@@ -148,6 +164,7 @@ function RecieveText() {
           break;
       }
     });
+    console.log(word);
     plusText.value = [word];
   });
 }
@@ -193,9 +210,21 @@ function GetRoomInfo() {
       }
     } else if (packet.cmd === "SetReply") {
       parseText(packet.value);
+    } else if (packet.cmd === "DataPackage") {
+      //console.log(packet.data.games);
+      // for (const game in packet.data.games) {
+      //   //console.log(packet.data.games[game]);
+      //   for (const itemName in packet.data.games[game]) {
+      //     if (itemName === 'item_name_to_id') {
+      //       console.log(game);
+      //       console.log(packet.data.games[game][itemName]);
+      //     }
+      //   }
+      // }
     }
   });
   client.addListener("Retrieved", (packet) => {
+    console.log(packet);
     let player, hintArray: any;
     for (player in packet.keys) {
       hintArray = packet.keys[player];
@@ -284,7 +313,7 @@ function sendText() {
       <div
         class="text_loop"
         v-for="(t, index) in text"
-        :key="t"
+        :key="index"
         :data="index"
         :ref="(el) => changeHeight(el)"
       >

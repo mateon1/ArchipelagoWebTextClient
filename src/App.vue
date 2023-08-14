@@ -5,7 +5,7 @@ import ShowHints from "./components/ShowHints.vue";
 import { ref } from "vue";
 
 const inputName = ref("SneakiRoR");
-const inputServerInfo = ref("archipelago.gg:53033");
+const inputServerInfo = ref("localhost:58446");
 const authenticate = ref(false);
 const errorMessage = ref("");
 const viewPage = ref("");
@@ -35,7 +35,7 @@ function OnConnect() {
         <TextClient
           :slotName="inputName"
           :serverInfo="inputServerInfo"
-          @authenticted="
+          @authenticated="
             (payload) => {
               authenticate = payload.authenticate;
               errorMessage = payload.err;
