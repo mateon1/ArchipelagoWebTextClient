@@ -25,9 +25,11 @@ function OnConnect() {
 
 <template>
   <header class="ap_header">
-    <button v-on:click="viewPage = 'itemRecieved'">Items Recieved</button>
-    <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
-    <button v-on:click="viewPage = 'Hints'">Show Hints</button>
+    <span v-if="authenticate">
+      <button v-on:click="viewPage = 'itemRecieved'">Items Recieved</button>
+      <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
+      <button v-on:click="viewPage = 'Hints'">Show Hints</button>
+    </span>
   </header>
   <div class="ap_body">
     <div v-if="authenticate">
