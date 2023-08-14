@@ -76,6 +76,16 @@ header {
   position: absolute;
   bottom: -7vh;
 }
+.scroll_button {
+  position: absolute;
+  bottom: -2vh;
+  right: 2vw;
+  fill: white;
+}
+.scroll_button:hover {
+  border: solid 1px gray;
+}
+
 /* AP color classes */
 .currentPlayer {
   color: var(--ap-magenta);
@@ -103,8 +113,10 @@ header {
   color: var(--ap-slateblue);
 }
 
+/* Recieved Items Section */
 .received_items {
   columns: 2 auto;
+  column-gap: 0px;
 }
 .received_items span {
   display: block;
@@ -118,6 +130,7 @@ header {
   }
 }
 
+/* Desktop Styles */
 @media (min-width: 1024px) {
   body {
     display: flex;
