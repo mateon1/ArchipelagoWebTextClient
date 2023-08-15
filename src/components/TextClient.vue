@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import getItemType from "../helpers/GetItemTypeHelper";
 import { Client, ITEMS_HANDLING_FLAGS } from "archipelago.js";
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 const props = defineProps<{
   slotName: string;
   serverInfo: string;
+  isConnected: boolean;
+  connecting: boolean;
 }>();
 const emit = defineEmits<{
   (
@@ -17,9 +19,27 @@ const emit = defineEmits<{
   ): void;
   (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
 }>();
+watch(
+  () => props.isConnected,
+  () => {
+    // console.log("prop value changed", props.isConnected);
+    if (!props.isConnected) {
+      Disconnect();
+    }
+  }
+);
+watch(
+  () => props.connecting,
+  () => {
+    // console.log("connecting value changed", props.connecting);
+    if (props.connecting) {
+      Connect();
+    }
+  }
+)
 const serverURI = props.serverInfo.split(":");
 // console.log(serverURI[0]);
-
+// console.log(props.connect);
 const client = new Client();
 const connectionInfo = {
   hostname: serverURI[0],
@@ -54,8 +74,7 @@ const plusText = computed({
   },
 });
 const inputText = ref("");
-
-Connect();
+// Connect();
 
 function Connect() {
   // Set up the AP client.
@@ -83,6 +102,8 @@ function Connect() {
       client.removeListener("PrintJSON", () => {});
       client.removeListener("ReceivedItems", () => {});
       client.removeListener("RoomInfo", () => {});
+      client.removeListener("Retrieved", () => {});
+      client.removeListener("PacketReceived", () => {});
     });
   RecieveText();
   RecievedItems();
@@ -95,7 +116,10 @@ function Disconnect() {
   client.removeListener("PrintJSON", () => {});
   client.removeListener("ReceivedItems", () => {});
   client.removeListener("RoomInfo", () => {});
+  client.removeListener("Retrieved", () => {});
+  client.removeListener("PacketReceived", () => {});
   emit("authenticated", { err: "Disconnected", authenticate: false });
+  text.value = [];
 }
 function RecieveText() {
   // console.log("text");
@@ -209,9 +233,6 @@ function GetRoomInfo() {
       parseText(hintArray);
     }
   });
-  client.addListener("RoomUpdate", (packet) => {
-    //console.log(packet);
-  });
 }
 
 function changeHeight(el: any) {
@@ -299,7 +320,7 @@ function sendText() {
       </div>
     </span>
   </div>
-  <div class="disconnect_button">
+  <div class="ap_disconnect_button">
     <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>
   </div>
   <svg

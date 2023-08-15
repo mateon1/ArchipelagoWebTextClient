@@ -2,13 +2,14 @@
 import TextClient from "./components/TextClient.vue";
 import ReceivedItems from "./components/ReceivedItems.vue";
 import ShowHints from "./components/ShowHints.vue";
-import { ref } from "vue";
+import { mergeProps, ref } from "vue";
 
 const inputName = ref("SneakiRoR");
 const inputServerInfo = ref("localhost:61507");
 const authenticate = ref(false);
 const errorMessage = ref("");
 const viewPage = ref("");
+const connecting = ref(false);
 const items: [{ item: string; amount: number; type: number }] = [
   { item: "", amount: 0, type: 0 },
 ];
@@ -20,6 +21,12 @@ function OnConnect() {
   authenticate.value = true;
   errorMessage.value = "";
   viewPage.value = "textClient";
+  connecting.value = true;
+}
+function Disconnect() {
+  authenticate.value = false;
+  viewPage.value = "";
+  connecting.value = false;
 }
 </script>
 
@@ -41,11 +48,13 @@ function OnConnect() {
     </span>
   </header>
   <div class="ap_body">
-    <div v-if="authenticate">
+    <div v-show="authenticate">
       <span v-show="viewPage === 'textClient'" class="wrapper">
         <TextClient
           :slotName="inputName"
           :serverInfo="inputServerInfo"
+          :isConnected="authenticate"
+          :connecting="connecting"
           @authenticated="
             (payload) => {
               authenticate = payload.authenticate;
@@ -86,6 +95,9 @@ function OnConnect() {
     </div>
     <div v-if="viewPage === 'Hints'" class="wrapper">
       <ShowHints :receivedHints="receivedHints" />
+    </div>
+    <div class="ap_disconnect_button" v-show="authenticate">
+      <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>
     </div>
   </div>
 
