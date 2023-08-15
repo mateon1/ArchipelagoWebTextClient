@@ -1,34 +1,11 @@
 <script setup lang="ts">
 import getItemType from "../helpers/GetItemTypeHelper";
-import {
-  Client,
-  ITEMS_HANDLING_FLAGS,
-  type JSONSerializableData,
-} from "archipelago.js";
+import { Client, ITEMS_HANDLING_FLAGS } from "archipelago.js";
 import { computed, ref, onMounted } from "vue";
 const props = defineProps<{
   slotName: string;
   serverInfo: string;
 }>();
-console.log(getItemType(1));
-// const emit = defineEmits<{
-//   (
-//     ...args:
-//       | [
-//           e: "onRecievedItemsChanged",
-//           itemName: [{ item: string; amount: number; type: number }]
-//         ]
-//       | [
-//           e: "authenticated",
-//           authenticate: { err: string; authenticate: boolean }
-//         ]
-//       | [e: "onRecievedHintChanged", hints: [{ word: string }]]
-//   ): void;
-// }>();
-// const emit = defineEmits<{
-//   (e: "change", id: number): void;
-//   (e: "update", value: string): void;
-// }>();
 const emit = defineEmits<{
   (
     e: "onRecievedItemsChanged",
@@ -41,7 +18,7 @@ const emit = defineEmits<{
   (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
 }>();
 const serverURI = props.serverInfo.split(":");
-console.log(serverURI[0]);
+// console.log(serverURI[0]);
 
 const client = new Client();
 const connectionInfo = {
@@ -121,14 +98,14 @@ function Disconnect() {
   emit("authenticated", { err: "Disconnected", authenticate: false });
 }
 function RecieveText() {
-  console.log("text");
+  // console.log("text");
   // Listen for packet events.
   client.addListener("PrintJSON", (packet) => {
     let word = "";
     if (text.value.length >= 500) {
       text.value.splice(0, 20);
     }
-    console.log(text.value.length + " length");
+    // console.log(text.value.length + " length");
     packet.data.forEach((text) => {
       switch (text.type) {
         case "player_id":
@@ -170,7 +147,7 @@ function RecieveText() {
 
 function RecievedItems() {
   client.addListener("ReceivedItems", (packet) => {
-    console.log(packet);
+    // console.log(packet);
     let packetItems: [{ item: string; amount: number; type: number }] = [
       { item: "", amount: 0, type: 0 },
     ];
@@ -191,16 +168,16 @@ function RecievedItems() {
       }
     });
     packetItems.splice(0, 1);
-    console.log(packetItems);
+    // console.log(packetItems);
     emit("onRecievedItemsChanged", packetItems);
   });
 }
 function GetRoomInfo() {
   client.addListener("RoomInfo", (packet) => {
-    console.log(packet);
+    // console.log(packet);
   });
   client.addListener("PacketReceived", (packet) => {
-    console.log(packet);
+    // console.log(packet);
     if (packet.cmd === "Connected") {
       for (const key in packet.slot_info) {
         if (packet.slot_info[key].name === props.slotName) {
@@ -223,18 +200,17 @@ function GetRoomInfo() {
     }
   });
   client.addListener("Retrieved", (packet) => {
-    console.log(packet);
+    //console.log(packet);
     let player, hintArray: any;
     for (player in packet.keys) {
       hintArray = packet.keys[player];
     }
     if (hintArray) {
-      updateHints(hintArray);
       parseText(hintArray);
     }
   });
   client.addListener("RoomUpdate", (packet) => {
-    console.log(packet);
+    //console.log(packet);
   });
 }
 
@@ -253,10 +229,6 @@ function scrollToBottom() {
   if (element) {
     element.scrollTo(0, element.scrollHeight);
   }
-}
-function updateHints(hint: JSONSerializableData) {
-  console.log(hint);
-  //emit("onRecievedHintChanged", hint)
 }
 function parseText(data: any) {
   let word = "";
@@ -309,6 +281,7 @@ function parseText(data: any) {
 }
 function sendText() {
   client.say(inputText.value);
+  inputText.value = "";
 }
 </script>
 
@@ -326,9 +299,9 @@ function sendText() {
       </div>
     </span>
   </div>
-  <button class="disconnect_button" v-on:click="Disconnect()">
-    Disconnect
-  </button>
+  <div class="disconnect_button">
+    <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>
+  </div>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     height="1em"
@@ -343,7 +316,7 @@ function sendText() {
   </svg>
   <form onsubmit="return false;" class="chat_form">
     <input type="text" name="Input Text" v-model="inputText" />
-    <button v-on:click="sendText">Send</button>
+    <button v-on:click="sendText" class="ap_button">Send</button>
   </form>
 </template>
 

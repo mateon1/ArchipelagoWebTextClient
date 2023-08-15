@@ -2,7 +2,7 @@
 const props = defineProps<{
   receivedHints: [{ word: string }];
 }>();
-console.log(props.receivedHints);
+// console.log(props.receivedHints);
 </script>
 <template>
   <div id="received_body">

@@ -2,7 +2,6 @@
 
 #app {
   max-width: 1280px;
-  /* margin: 0 auto; */
   font-weight: normal;
 }
 
@@ -34,12 +33,13 @@ header {
 .text_loop span, .received_hints span, .received_items span {
   word-wrap: break-word;
 }
+/* Component Body */
 .wrapper {
   height: 75vh;
   width: 100vw;
   display: block;
 }
-
+/* Header */
 .ap_header {
   z-index: 100;
   position: relative;
@@ -50,7 +50,23 @@ header {
   padding: 2rem 2rem;
   background: var(--color-background);
 }
-
+.ap_header span {
+  display: grid;
+  gap: 0px;
+  grid-auto-flow: column;
+}
+.ap_button {
+  height: 5vh;
+  border: 1px solid gray;
+  background: var(--vt-c-black);
+  color: white;
+  padding-right: 3vw;
+  padding-left: 3vw;
+}
+.ap_button:hover, .ap_button:active {
+  cursor: pointer;
+  background-color: var(--ap-plum);
+}
 .ap_body {
   display: flex;
   place-content: center;
@@ -60,21 +76,50 @@ header {
   width: 100vw;
   height: 75vh;
 }
+
+.ap_input {
+  /* background-color: var(--vt-c-black);
+  color: white;
+  border-color: gray; */
+  height: 4vh;
+}
+.ap_connect_button {
+  height: 4vh;
+}
 .server_info, .error_message {
   display: grid;
   place-content: center;
 }
-
-.ap_header button {
-  height: 5vh;
+.error_message {
+  color: red;
 }
 .chat_form {
   position: absolute;
-  bottom: -4vh;
+  bottom: -3vh;
+}
+.chat_form input {
+  width: 71vw;
+  height: 3vh;
+}
+.chat_form button {
+  width: 20vw;
+  height: 3vh;
 }
 .disconnect_button {
   position: absolute;
-  bottom: -7vh;
+  bottom: -11vh;
+  height: 4vh;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  width: 25vw;
+}
+.disconnect_button button, .ap_connect_button button {
+  height: 4vh;
+}
+.ap_connect_button {
+  display: flex;
+  place-content: center;
 }
 .scroll_button {
   position: absolute;
@@ -82,7 +127,7 @@ header {
   right: 2vw;
   fill: white;
 }
-.scroll_button:hover {
+.scroll_button:hover, .scroll_button:active {
   border: solid 1px gray;
 }
 
@@ -152,7 +197,9 @@ header {
     width: 100vw;
     padding: 0 2rem;
   }
-
+  .ap_header button {
+    height: 5vh;
+  }
   .ap_body {
     display: flex;
     place-content: center;
@@ -165,10 +212,6 @@ header {
 
   .logo {
     margin: 0 2rem 0 0;
-  }
-
-  .ap_header button {
-    height: 5vh;
   }
   .wrapper {
     height: 80vh;

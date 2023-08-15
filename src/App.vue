@@ -5,7 +5,7 @@ import ShowHints from "./components/ShowHints.vue";
 import { ref } from "vue";
 
 const inputName = ref("SneakiRoR");
-const inputServerInfo = ref("localhost:58446");
+const inputServerInfo = ref("localhost:61507");
 const authenticate = ref(false);
 const errorMessage = ref("");
 const viewPage = ref("");
@@ -26,12 +26,18 @@ function OnConnect() {
 <template>
   <header class="ap_header">
     <span v-if="authenticate">
-      <button v-on:click="viewPage = 'itemRecieved'">Items Recieved</button>
-      <button v-on:click="viewPage = 'textClient'">Show Text Client</button>
-      <button v-on:click="viewPage = 'Hints'">Show Hints</button>
+      <button v-on:click="viewPage = 'itemRecieved'" class="ap_button">
+        Items Recieved
+      </button>
+      <button v-on:click="viewPage = 'textClient'" class="ap_button">
+        Show Text Client
+      </button>
+      <button v-on:click="viewPage = 'Hints'" class="ap_button">
+        Show Hints
+      </button>
     </span>
     <span v-else>
-      <H1>AP Web Text Client</H1>
+      <h1>AP Web Text Client</h1>
     </span>
   </header>
   <div class="ap_body">
@@ -55,18 +61,20 @@ function OnConnect() {
       <form onsubmit="return false;" class="server_info">
         <input
           type="text"
+          class="ap_input"
           name="Server Info"
-          placeholder="Server Info"
+          placeholder="Server Info address:port"
           v-model="inputServerInfo"
         />
         <input
           type="text"
+          class="ap_input"
           name="Slot"
           placeholder="Slot Name"
           v-model="inputName"
         />
-        <div>
-          <button v-on:click="OnConnect">Connect</button>
+        <div class="ap_connect_button">
+          <button v-on:click="OnConnect" class="ap_button">Connect</button>
         </div>
       </form>
       <div class="error_message">
