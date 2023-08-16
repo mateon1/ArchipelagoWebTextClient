@@ -18,13 +18,17 @@ const emit = defineEmits<{
     authenticate: { err: string; authenticate: boolean }
   ): void;
   (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
+  (e: "connected-to-server", connectedToServer: boolean): void
 }>();
+
+const serverURI = ref([""]);
+serverURI.value = props.serverInfo.split(":");
 watch(
   () => props.isConnected,
   () => {
     // console.log("prop value changed", props.isConnected);
     if (!props.isConnected) {
-      Disconnect();
+      Disconnect("Disconnected");
     }
   }
 );
@@ -33,22 +37,28 @@ watch(
   () => {
     // console.log("connecting value changed", props.connecting);
     if (props.connecting) {
+      serverURI.value = props.serverInfo.split(":");
+      connectionInfo.value = {
+        hostname: serverURI.value[0],
+        port: Number(serverURI.value[1]),
+        game: "",
+        name: props.slotName,
+        items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
+        tags: ["TextOnly"],
+      };
       Connect();
     }
   }
-)
-const serverURI = props.serverInfo.split(":");
-// console.log(serverURI[0]);
-// console.log(props.connect);
+);
 const client = new Client();
-const connectionInfo = {
-  hostname: serverURI[0],
-  port: Number(serverURI[1]),
+const connectionInfo = ref({
+  hostname: "",
+  port: 38281,
   game: "",
-  name: props.slotName,
-  items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
-  tags: ["TextOnly"],
-};
+  name: "",
+  items_handling: 7,
+  tags: [""],
+});
 const game = ref("");
 let lastKnownScrollLocation = 0;
 
@@ -80,7 +90,7 @@ function Connect() {
   // Set up the AP client.
   // Connect to the Archipelago server.
   client
-    .connect(connectionInfo)
+    .connect(connectionInfo.value)
     .then(() => {
       plusText.value = [
         `<span class="default">Connected to room with ${
@@ -88,29 +98,20 @@ function Connect() {
         } players.</span>`,
       ];
       connected.value = true;
+      emit("connected-to-server", true);
       console.log("connected");
 
       // game = client.data.games.
     })
     .catch(() => {
-      emit("authenticated", {
-        err: "Couldn't connect for some reason",
-        authenticate: false,
-      });
-      client.disconnect();
-      connected.value = false;
-      client.removeListener("PrintJSON", () => {});
-      client.removeListener("ReceivedItems", () => {});
-      client.removeListener("RoomInfo", () => {});
-      client.removeListener("Retrieved", () => {});
-      client.removeListener("PacketReceived", () => {});
+      Disconnect("Couldn't connect for some reason");
     });
   RecieveText();
   RecievedItems();
   GetRoomInfo();
 }
 
-function Disconnect() {
+function Disconnect(error: string): void {
   client.disconnect();
   connected.value = false;
   client.removeListener("PrintJSON", () => {});
@@ -118,7 +119,7 @@ function Disconnect() {
   client.removeListener("RoomInfo", () => {});
   client.removeListener("Retrieved", () => {});
   client.removeListener("PacketReceived", () => {});
-  emit("authenticated", { err: "Disconnected", authenticate: false });
+  emit("authenticated", { err: error, authenticate: false });
   text.value = [];
 }
 function RecieveText() {
@@ -134,7 +135,9 @@ function RecieveText() {
       switch (text.type) {
         case "player_id":
           // word += client.players.name(Number(text.text));
-          if (client.players.name(Number(text.text)) === connectionInfo.name) {
+          if (
+            client.players.name(Number(text.text)) === connectionInfo.value.name
+          ) {
             word += `<span class="currentPlayer"> ${client.players.alias(
               Number(text.text)
             )}</span>`;
@@ -176,7 +179,6 @@ function RecievedItems() {
       { item: "", amount: 0, type: 0 },
     ];
     packet.items.forEach((i) => {
-      // console.log(client.items.name(game.value, i.item))
       const name: string = client.items.name(game.value, i.item);
       let noItems: boolean = true;
       for (let k = 0; k < packetItems.length; k++) {
@@ -258,7 +260,7 @@ function parseText(data: any) {
     word = "";
     word += `<span class="default"> [${text.class}]: </span>`;
     if (
-      client.players.name(Number(text.receiving_player)) === connectionInfo.name
+      client.players.name(Number(text.receiving_player)) === connectionInfo.value.name
     ) {
       word += `<span class="currentPlayer"> ${client.players.alias(
         Number(text.receiving_player)
@@ -280,7 +282,7 @@ function parseText(data: any) {
     )}</span>`;
     word += `<span class="default"> in </span>`;
     if (
-      client.players.name(Number(text.finding_player)) === connectionInfo.name
+      client.players.name(Number(text.finding_player)) === connectionInfo.value.name
     ) {
       word += `<span class="currentPlayer"> ${client.players.alias(
         Number(text.finding_player)
@@ -321,7 +323,7 @@ function sendText() {
     </span>
   </div>
   <div class="ap_disconnect_button">
-    <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>
+    <button class="ap_button" v-on:click="Disconnect('Disconnected')">Disconnect</button>
   </div>
   <svg
     xmlns="http://www.w3.org/2000/svg"

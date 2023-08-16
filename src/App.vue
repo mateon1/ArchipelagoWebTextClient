@@ -2,7 +2,7 @@
 import TextClient from "./components/TextClient.vue";
 import ReceivedItems from "./components/ReceivedItems.vue";
 import ShowHints from "./components/ShowHints.vue";
-import { mergeProps, ref } from "vue";
+import { mergeProps, ref, watch } from "vue";
 
 const inputName = ref("SneakiRoR");
 const inputServerInfo = ref("localhost:61507");
@@ -18,7 +18,6 @@ const receivedItems = ref(items);
 const receivedHints = ref(jsonData);
 
 function OnConnect() {
-  authenticate.value = true;
   errorMessage.value = "";
   viewPage.value = "textClient";
   connecting.value = true;
@@ -26,8 +25,15 @@ function OnConnect() {
 function Disconnect() {
   authenticate.value = false;
   viewPage.value = "";
-  connecting.value = false;
 }
+watch(
+  () => errorMessage.value,
+  () => {
+    if (errorMessage.value != "") {
+      connecting.value = false;
+    }
+  }
+);
 </script>
 
 <template>
@@ -63,6 +69,7 @@ function Disconnect() {
           "
           @onRecievedItemsChanged="(payload) => (receivedItems = payload)"
           @onRecievedHintChanged="(payload) => (receivedHints = payload)"
+          @connected-to-server="(payload) => (authenticate = payload)"
         />
       </span>
     </div>
