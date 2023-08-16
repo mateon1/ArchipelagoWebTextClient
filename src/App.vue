@@ -6,6 +6,7 @@ import { mergeProps, ref, watch } from "vue";
 
 const inputName = ref("SneakiRoR");
 const inputServerInfo = ref("localhost:61507");
+const inputPassword = ref("");
 const authenticate = ref(false);
 const errorMessage = ref("");
 const viewPage = ref("");
@@ -59,6 +60,7 @@ watch(
         <TextClient
           :slotName="inputName"
           :serverInfo="inputServerInfo"
+          :password="inputPassword"
           :isConnected="authenticate"
           :connecting="connecting"
           @authenticated="
@@ -89,6 +91,15 @@ watch(
           placeholder="Slot Name"
           v-model="inputName"
         />
+        <input
+          type="text"
+          class="ap_input"
+          name="Password"
+          id="input_password"
+          placeholder="Password (Optional)"
+          v-model="inputPassword"
+        />
+
         <div class="ap_connect_button">
           <button v-on:click="OnConnect" class="ap_button">Connect</button>
         </div>

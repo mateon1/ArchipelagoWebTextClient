@@ -5,6 +5,7 @@ import { computed, ref, onMounted, watch } from "vue";
 const props = defineProps<{
   slotName: string;
   serverInfo: string;
+  password: string;
   isConnected: boolean;
   connecting: boolean;
 }>();
@@ -23,6 +24,19 @@ const emit = defineEmits<{
 
 const serverURI = ref([""]);
 serverURI.value = props.serverInfo.split(":");
+const client = new Client();
+const connectionInfo = ref({
+  hostname: "",
+  port: 38281,
+  game: "",
+  name: "",
+  items_handling: 7,
+  tags: [""],
+  password: "",
+});
+const game = ref("");
+let lastKnownScrollLocation = 0;
+
 watch(
   () => props.isConnected,
   () => {
@@ -45,22 +59,12 @@ watch(
         name: props.slotName,
         items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
         tags: ["TextOnly"],
+        password: props.password,
       };
       Connect();
     }
   }
 );
-const client = new Client();
-const connectionInfo = ref({
-  hostname: "",
-  port: 38281,
-  game: "",
-  name: "",
-  items_handling: 7,
-  tags: [""],
-});
-const game = ref("");
-let lastKnownScrollLocation = 0;
 
 onMounted(() => {
   const element = document.getElementById("text_body");
@@ -103,8 +107,12 @@ function Connect() {
 
       // game = client.data.games.
     })
-    .catch(() => {
-      Disconnect("Couldn't connect for some reason");
+    .catch((error) => {
+      if (typeof error[0] === "string"){
+        Disconnect(error[0]);
+      } else {
+        Disconnect("Couldn't connect for some reason");
+      }
     });
   RecieveText();
   RecievedItems();
