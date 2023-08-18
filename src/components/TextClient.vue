@@ -330,9 +330,9 @@ function sendText() {
       </div>
     </span>
   </div>
-  <div class="ap_disconnect_button">
+  <!-- <div class="ap_disconnect_button">
     <button class="ap_button" v-on:click="Disconnect('Disconnected')">Disconnect</button>
-  </div>
+  </div> -->
   <svg
     xmlns="http://www.w3.org/2000/svg"
     height="1em"

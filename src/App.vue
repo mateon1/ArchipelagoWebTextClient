@@ -4,8 +4,8 @@ import ReceivedItems from "./components/ReceivedItems.vue";
 import ShowHints from "./components/ShowHints.vue";
 import { mergeProps, ref, watch } from "vue";
 
-const inputName = ref("SneakiRoR");
-const inputServerInfo = ref("localhost:61507");
+const inputName = ref("");
+const inputServerInfo = ref("archipelago.gg:38281");
 const inputPassword = ref("");
 const authenticate = ref(false);
 const errorMessage = ref("");
