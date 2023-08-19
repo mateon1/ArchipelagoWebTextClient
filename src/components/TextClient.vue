@@ -95,7 +95,7 @@ function Connect() {
   // Connect to the Archipelago server.
   client
     .connect(connectionInfo.value)
-    .then(() => {
+    .then((packet) => {
       plusText.value = [
         `<span class="default">Connected to room with ${
           client.players.all.length - 1
@@ -103,7 +103,8 @@ function Connect() {
       ];
       connected.value = true;
       emit("connected-to-server", true);
-      console.log("connected");
+      console.log("connected to " + serverURI.value);
+      console.log(packet);
 
       // game = client.data.games.
     })
