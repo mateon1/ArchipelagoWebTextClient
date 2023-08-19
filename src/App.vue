@@ -2,7 +2,7 @@
 import TextClient from "./components/TextClient.vue";
 import ReceivedItems from "./components/ReceivedItems.vue";
 import ShowHints from "./components/ShowHints.vue";
-import { mergeProps, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 const inputName = ref("");
 const inputServerInfo = ref("archipelago.gg:38281");
@@ -104,8 +104,11 @@ watch(
           <button v-on:click="OnConnect" class="ap_button">Connect</button>
         </div>
       </form>
-      <div class="error_message">
+      <div class="error_message" v-if="errorMessage !== ''">
         <p>{{ errorMessage }}</p>
+      </div>
+      <div class="connecting_message" v-else-if="!authenticate && connecting">
+        <p>Connecting</p>
       </div>
     </div>
     <div v-if="viewPage === 'itemRecieved'" class="wrapper">

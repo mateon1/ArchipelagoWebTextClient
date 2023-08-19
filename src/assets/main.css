@@ -104,12 +104,15 @@ header span h1 {
 .ap_connect_button {
   height: 4vh;
 }
-.server_info, .error_message {
+.server_info, .error_message, .connecting_message {
   display: grid;
   place-content: center;
 }
 .error_message {
   color: red;
+}
+.connecting_message {
+  color: green;
 }
 .chat_form {
   position: absolute;
