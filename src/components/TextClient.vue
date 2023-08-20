@@ -19,7 +19,7 @@ const emit = defineEmits<{
     authenticate: { err: string; authenticate: boolean }
   ): void;
   (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
-  (e: "connected-to-server", connectedToServer: boolean): void
+  (e: "connected-to-server", connectedToServer: boolean): void;
 }>();
 
 const serverURI = ref([""]);
@@ -33,6 +33,7 @@ const connectionInfo = ref({
   items_handling: 7,
   tags: [""],
   password: "",
+  slot_data: false,
 });
 const game = ref("");
 let lastKnownScrollLocation = 0;
@@ -60,6 +61,7 @@ watch(
         items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
         tags: ["TextOnly"],
         password: props.password,
+        slot_data: false,
       };
       Connect();
     }
@@ -93,6 +95,7 @@ const inputText = ref("");
 function Connect() {
   // Set up the AP client.
   // Connect to the Archipelago server.
+  console.log(connectionInfo.value);
   client
     .connect(connectionInfo.value)
     .then((packet) => {
@@ -109,7 +112,7 @@ function Connect() {
       // game = client.data.games.
     })
     .catch((error) => {
-      if (typeof error[0] === "string"){
+      if (typeof error[0] === "string") {
         Disconnect(error[0]);
       } else {
         Disconnect("Couldn't connect for some reason");
@@ -208,9 +211,9 @@ function RecievedItems() {
   });
 }
 function GetRoomInfo() {
-  client.addListener("RoomInfo", (packet) => {
-    // console.log(packet);
-  });
+  // client.addListener("RoomInfo", (packet) => {
+  //   console.log(packet);
+  // });
   client.addListener("PacketReceived", (packet) => {
     // console.log(packet);
     if (packet.cmd === "Connected") {
@@ -269,7 +272,8 @@ function parseText(data: any) {
     word = "";
     word += `<span class="default"> [${text.class}]: </span>`;
     if (
-      client.players.name(Number(text.receiving_player)) === connectionInfo.value.name
+      client.players.name(Number(text.receiving_player)) ===
+      connectionInfo.value.name
     ) {
       word += `<span class="currentPlayer"> ${client.players.alias(
         Number(text.receiving_player)
@@ -291,7 +295,8 @@ function parseText(data: any) {
     )}</span>`;
     word += `<span class="default"> in </span>`;
     if (
-      client.players.name(Number(text.finding_player)) === connectionInfo.value.name
+      client.players.name(Number(text.finding_player)) ===
+      connectionInfo.value.name
     ) {
       word += `<span class="currentPlayer"> ${client.players.alias(
         Number(text.finding_player)
