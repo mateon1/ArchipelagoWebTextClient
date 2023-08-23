@@ -17,6 +17,8 @@ const items: [{ item: string; amount: number; type: number }] = [
 const jsonData: [{ word: string }] = [{ word: "" }];
 const receivedItems = ref(items);
 const receivedHints = ref(jsonData);
+const hintCost = ref(0);
+const hintPoints = ref(0);
 
 function OnConnect() {
   errorMessage.value = "";
@@ -72,6 +74,8 @@ watch(
           @onRecievedItemsChanged="(payload) => (receivedItems = payload)"
           @onRecievedHintChanged="(payload) => (receivedHints = payload)"
           @connected-to-server="(payload) => (authenticate = payload)"
+          @hint_cost="(payload) => (hintCost = payload)"
+          @current_hint_points="(payload) => (hintPoints = payload)"
         />
       </span>
     </div>
@@ -115,7 +119,11 @@ watch(
       <ReceivedItems :receivedItems="receivedItems" />
     </div>
     <div v-if="viewPage === 'Hints'" class="wrapper">
-      <ShowHints :receivedHints="receivedHints" />
+      <ShowHints
+        :receivedHints="receivedHints"
+        :hintCost="hintCost"
+        :currentHintPoints="hintPoints"
+      />
     </div>
     <div class="ap_disconnect_button" v-show="authenticate">
       <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>

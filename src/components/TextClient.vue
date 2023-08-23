@@ -20,6 +20,8 @@ const emit = defineEmits<{
   ): void;
   (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
   (e: "connected-to-server", connectedToServer: boolean): void;
+  (e: "hint_cost", hintCost: number): void;
+  (e: "current_hint_points", hintPoints: number): void;
 }>();
 
 const serverURI = ref([""]);
@@ -37,6 +39,8 @@ const connectionInfo = ref({
 });
 const game = ref("");
 let lastKnownScrollLocation = 0;
+const totalLocation = ref(0);
+const percentageHintCost = ref(0);
 
 watch(
   () => props.isConnected,
@@ -211,31 +215,38 @@ function RecievedItems() {
   });
 }
 function GetRoomInfo() {
-  // client.addListener("RoomInfo", (packet) => {
-  //   console.log(packet);
-  // });
-  client.addListener("PacketReceived", (packet) => {
+  client.addListener("RoomInfo", (packet) => {
     // console.log(packet);
-    if (packet.cmd === "Connected") {
-      for (const key in packet.slot_info) {
-        if (packet.slot_info[key].name === props.slotName) {
-          game.value = packet.slot_info[key].game;
-        }
-      }
-    } else if (packet.cmd === "SetReply") {
-      parseText(packet.value);
-    } else if (packet.cmd === "DataPackage") {
-      //console.log(packet.data.games);
-      // for (const game in packet.data.games) {
-      //   //console.log(packet.data.games[game]);
-      //   for (const itemName in packet.data.games[game]) {
-      //     if (itemName === 'item_name_to_id') {
-      //       console.log(game);
-      //       console.log(packet.data.games[game][itemName]);
-      //     }
-      //   }
-      // }
+    percentageHintCost.value = packet.hint_cost;
+  });
+  client.addListener("RoomUpdate", (packet) => {
+    if (packet.hint_cost) {
+      percentageHintCost.value = packet.hint_cost;
+      const percentageCost = getHintCost();
+      console.log(percentageCost);
+      emit("hint_cost", percentageCost);
     }
+    if (packet.hint_points) {
+      emit("current_hint_points", packet.hint_points);
+    }
+  });
+  client.addListener("Connected", (packet) => {
+    totalLocation.value =
+      packet.checked_locations.length + packet.missing_locations.length;
+    const percentageCost = getHintCost();
+    emit("hint_cost", percentageCost);
+    for (const key in packet.slot_info) {
+      if (packet.slot_info[key].name === props.slotName) {
+        game.value = packet.slot_info[key].game;
+      }
+    }
+    emit("current_hint_points", packet.hint_points);
+  });
+  client.addListener("SetReply", (packet) => {
+    parseHintText(packet.value);
+  });
+  client.addListener("PacketReceived", (packet) => {
+    console.log(packet);
   });
   client.addListener("Retrieved", (packet) => {
     //console.log(packet);
@@ -244,7 +255,7 @@ function GetRoomInfo() {
       hintArray = packet.keys[player];
     }
     if (hintArray) {
-      parseText(hintArray);
+      parseHintText(hintArray);
     }
   });
 }
@@ -259,13 +270,19 @@ function changeHeight(el: any) {
     }
   }
 }
+function getHintCost() {
+  return Math.max(
+    0,
+    Math.floor((percentageHintCost.value * totalLocation.value) / 100)
+  );
+}
 function scrollToBottom() {
   let element = document.getElementById("text_body");
   if (element) {
     element.scrollTo(0, element.scrollHeight);
   }
 }
-function parseText(data: any) {
+function parseHintText(data: any) {
   let word = "";
   let hint: [{ word: string }] = [{ word: "" }];
   data.forEach((text: any) => {
