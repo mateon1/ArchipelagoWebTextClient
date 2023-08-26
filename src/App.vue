@@ -115,10 +115,10 @@ watch(
         <p>Connecting</p>
       </div>
     </div>
-    <div v-if="viewPage === 'itemRecieved'" class="wrapper">
+    <div v-show="viewPage === 'itemRecieved'" class="wrapper">
       <ReceivedItems :receivedItems="receivedItems" />
     </div>
-    <div v-if="viewPage === 'Hints'" class="wrapper">
+    <div v-show="viewPage === 'Hints'" class="wrapper">
       <ShowHints
         :receivedHints="receivedHints"
         :hintCost="hintCost"

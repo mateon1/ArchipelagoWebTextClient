@@ -63,7 +63,7 @@ watch(
         game: "",
         name: props.slotName,
         items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
-        tags: ["TextOnly"],
+        tags: ["WebClient", "TextOnly"],
         password: props.password,
         slot_data: false,
       };
