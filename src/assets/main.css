@@ -78,7 +78,7 @@ header span h1 {
   border: 1px solid var(--ap-slateblue);
   background: var(--vt-c-black);
   color: white;
-  min-height: 2rem;
+  min-height: 1.5rem;
   
   /* padding-right: 3vw;
   padding-left: 3vw; */
@@ -158,7 +158,7 @@ header span h1 {
   place-content: center;
 }
 .ap_connect_button, .ap_disconnect_button {
-  min-height: 2rem;
+  min-height: 1.5rem;
 }
 .scroll_button {
   position: absolute;
@@ -264,5 +264,6 @@ header span h1 {
 @media (max-height: 736px) {
   footer {
     text-align: left;
+    font-size: 6px;
   }
 }
