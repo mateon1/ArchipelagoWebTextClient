@@ -2,11 +2,11 @@
 
 This Client is to be used along side [Archipelago](https://archipelago.gg) to view the text chat of what items have been sent/received. Along with the text chat, you will also be able to easily view your received items, as well as the current hints that you have.
 
-# Archipelago Setup
+## Archipelago Setup
 
 The setup guides for Archipelago can be found [Here](https://archipelago.gg/tutorial/)
 
-# Connecting to Archipelago
+## Connecting to Archipelago
 
 Once you receive the room page from the host, you can enter the following to connect:
 
@@ -15,7 +15,7 @@ Once you receive the room page from the host, you can enter the following to con
 * **Password**: optional password, leave blank if no password was set.
 
 
-# Remote Commands
+## Remote Commands
 
 You are able to use all remote commands that Archipelago has.
 
