@@ -160,7 +160,9 @@ function RecieveText() {
           } else {
             word += `<span class="otherPlayer"> ${client.players.alias(
               Number(text.text)
-            )}</span>`;
+            )}<span class="showGameName">${client.players.game(
+              Number(text.text)
+            )}</span></span>`;
           }
           break;
         case "item_id":
@@ -298,7 +300,9 @@ function parseHintText(data: any) {
     } else {
       word += `<span class="otherPlayer"> ${client.players.alias(
         Number(text.receiving_player)
-      )}</span>`;
+      )}<span class="showGameName">${client.players.game(
+        Number(text.receiving_player)
+      )}</span></span>`;
     }
     word += "<span class=default>'s </span>";
     word += `<span class="${getItemType(text.item_flags)}"> ${client.items.name(
@@ -321,7 +325,9 @@ function parseHintText(data: any) {
     } else {
       word += `<span class="otherPlayer"> ${client.players.alias(
         Number(text.finding_player)
-      )}</span>`;
+      )}<span class="showGameName">${client.players.game(
+        Number(text.finding_player)
+      )}</span></span>`;
     }
     word += `<span class="default">'s World </span>`;
     if (text.found) {

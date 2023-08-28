@@ -177,6 +177,26 @@ header span h1 {
 .otherPlayer {
   color: var(--ap-yellow);
 }
+.otherPlayer .showGameName {
+  visibility: hidden;
+  width: 120px;
+  background-color: var(--vt-c-black);
+  color: var(--ap-white);
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  right: -1vw;
+  bottom: 2vh;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
+}
+.otherPlayer:hover .showGameName {
+  visibility: visible;
+}
+.otherPlayer:hover .showGameName:hover {
+  visibility: hidden;
+}
 .location {
   color: var(--ap-green);
 }
@@ -216,50 +236,15 @@ header span h1 {
 
 /* Desktop Styles */
 @media (min-width: 1024px) {
-  /* body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: flex;
-    width: 100vw;
-    max-width: 100vw;
-  } */
-
-  /* .ap_header {
-    z-index: 100;
-    position: fixed;
-    place-content: center;
-    display: flex;
-    place-items: center;
-    width: 100vw;
-  } */
   header {
     font-size: 3rem;
   }
   .ap_header button {
     height: 5vh;
   }
-  /* .ap_body {
-    display: flex;
-    place-content: center;
-    height: 100vh;
-    place-items: center;
-    padding: 0 2rem;
-    width: 100vw;
-    /* height: 80vh; */
-  /* } */
-
   .logo {
     margin: 0 2rem 0 0;
   }
-  /* .wrapper {
-    height: 80vh;
-  } */
-  /* .text_loop, .received_items, .received_hints {
-    border-bottom: 0px;
-  } */
 }
 @media (max-height: 736px) {
   footer {
