@@ -111,7 +111,7 @@ function Connect() {
       connected.value = true;
       emit("connected-to-server", true);
       console.log("connected to " + serverURI.value);
-      console.log(packet);
+      // console.log(packet);
 
       // game = client.data.games.
     })
@@ -225,7 +225,7 @@ function GetRoomInfo() {
     if (packet.hint_cost) {
       percentageHintCost.value = packet.hint_cost;
       const percentageCost = getHintCost();
-      console.log(percentageCost);
+      // console.log(percentageCost);
       emit("hint_cost", percentageCost);
     }
     if (packet.hint_points) {
@@ -247,9 +247,9 @@ function GetRoomInfo() {
   client.addListener("SetReply", (packet) => {
     parseHintText(packet.value);
   });
-  client.addListener("PacketReceived", (packet) => {
-    console.log(packet);
-  });
+  // client.addListener("PacketReceived", (packet) => {
+  //   console.log(packet);
+  // });
   client.addListener("Retrieved", (packet) => {
     //console.log(packet);
     let player, hintArray: any;
