@@ -19,11 +19,21 @@ const receivedItems = ref(items);
 const receivedHints = ref(jsonData);
 const hintCost = ref(0);
 const hintPoints = ref(0);
+const url = location.protocol;
 
 function OnConnect() {
   errorMessage.value = "";
   viewPage.value = "textClient";
   connecting.value = true;
+}
+function SwitchProtocol() {
+  if (url == "http:") {
+    console.log(url + "connected");
+    location.href = "https://" + location.hostname;
+  } else {
+    console.log(url);
+    location.href = "http://" + location.hostname;
+  }
 }
 function Disconnect() {
   authenticate.value = false;
@@ -106,6 +116,10 @@ watch(
 
         <div class="ap_connect_button">
           <button v-on:click="OnConnect" class="ap_button">Connect</button>
+          <button v-on:click="SwitchProtocol" class="ap_switch_href ap_button">
+            <span v-if="url == 'https:'">Switch to HTTP</span>
+            <span v-else>Switch to HTTPS</span>
+          </button>
         </div>
       </form>
       <div class="error_message" v-if="errorMessage !== ''">

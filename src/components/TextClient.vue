@@ -102,7 +102,7 @@ function Connect() {
   console.log(connectionInfo.value);
   client
     .connect(connectionInfo.value)
-    .then((packet) => {
+    .then(() => {
       plusText.value = [
         `<span class="default">Connected to room with ${
           client.players.all.length - 1
