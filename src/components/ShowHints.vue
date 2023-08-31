@@ -95,7 +95,7 @@ input:checked + .slider:before {
   width: 75vw;
   display: inline-block;
   position: absolute;
-  top: 1vh;
+  top: 0vh;
 }
 .foundHints label {
   display: flex;
