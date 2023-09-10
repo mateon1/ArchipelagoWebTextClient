@@ -216,6 +216,9 @@ header span h1 {
 .usefulItem {
   color: var(--ap-slateblue);
 }
+.entrance {
+  color: var(--ap-blue);
+}
 
 /* Recieved Items Section */
 .received_items {

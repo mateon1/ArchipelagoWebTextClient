@@ -335,6 +335,10 @@ function parseHintText(data: any) {
     } else {
       word += `<span style="color: red"> (not found) </span> \n`;
     }
+    if (text.entrance) {
+      word += `<span class="default">at </span>`;
+      word += `<span class="entrance">${text.entrance} </span>`;
+    }
     hint.push({ word: word });
   });
   emit("onRecievedHintChanged", hint);
@@ -405,6 +409,9 @@ function sendText() {
 }
 :deep(.usefulItem) {
   color: var(--ap-slateblue);
+}
+:deep(.entrance) {
+  color: var(--ap-blue);
 }
 html {
   scroll-behavior: smooth;
