@@ -11,13 +11,9 @@ const authenticate = ref(false);
 const errorMessage = ref("");
 const viewPage = ref("");
 const connecting = ref(false);
-const items: [{ item: string; amount: number; type: number }] = [
-  { item: "", amount: 0, type: 0 },
-];
-const jsonData: [{ word: string }] = [{ word: "" }];
-const receivedItems = ref(items);
-const receivedHints = ref(jsonData);
-const hintCost = ref(0);
+const receivedItems = ref<{ item: string; amount: number; type: number }[]>([]);
+const receivedHints = ref<{ word: string, found: boolean }[]>([]);
+const hintCost = ref({hintCost: 0, percentageCost: 0});
 const hintPoints = ref(0);
 const url = location.protocol;
 
@@ -52,8 +48,8 @@ watch(
 <template>
   <header class="ap_header">
     <span v-if="authenticate">
-      <button v-on:click="viewPage = 'itemRecieved'" class="ap_button">
-        Items Recieved
+      <button v-on:click="viewPage = 'itemReceived'" class="ap_button">
+        Items Received
       </button>
       <button v-on:click="viewPage = 'textClient'" class="ap_button">
         Show Text Client
@@ -81,8 +77,8 @@ watch(
               errorMessage = payload.err;
             }
           "
-          @onRecievedItemsChanged="(payload) => (receivedItems = payload)"
-          @onRecievedHintChanged="(payload) => (receivedHints = payload)"
+          @onReceivedItemsChanged="(payload) => (receivedItems = payload)"
+          @onReceivedHintChanged="(payload) => (receivedHints = payload)"
           @connected-to-server="(payload) => (authenticate = payload)"
           @hint_cost="(payload) => (hintCost = payload)"
           @current_hint_points="(payload) => (hintPoints = payload)"
@@ -129,7 +125,7 @@ watch(
         <p>Connecting</p>
       </div>
     </div>
-    <div v-show="viewPage === 'itemRecieved'" class="wrapper">
+    <div v-show="viewPage === 'itemReceived'" class="wrapper">
       <ReceivedItems :receivedItems="receivedItems" />
     </div>
     <div v-show="viewPage === 'Hints'" class="wrapper">

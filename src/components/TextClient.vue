@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import getItemType from "../helpers/GetItemTypeHelper";
-import { Client, ITEMS_HANDLING_FLAGS } from "archipelago.js";
+import { Client, itemsHandlingFlags, Hint, Player, Item } from "archipelago.js";
+import type { MessageNode } from "archipelago.js";
 import { computed, ref, onMounted, watch } from "vue";
 const props = defineProps<{
   slotName: string;
@@ -11,36 +11,29 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   (
-    e: "onRecievedItemsChanged",
-    itemName: [{ item: string; amount: number; type: number }]
+    e: "onReceivedItemsChanged",
+    itemName: { item: string; amount: number; type: number }[]
   ): void;
   (
     e: "authenticated",
     authenticate: { err: string; authenticate: boolean }
   ): void;
-  (e: "onRecievedHintChanged", hints: [{ word: string }]): void;
+  (e: "onReceivedHintChanged", hints: {word: string, found: boolean}[]): void;
   (e: "connected-to-server", connectedToServer: boolean): void;
-  (e: "hint_cost", hintCost: number): void;
+  (e: "hint_cost", hintCosts: {hintCost: number, percentageCost: number}): void;
   (e: "current_hint_points", hintPoints: number): void;
 }>();
 
-const serverURI = ref([""]);
-serverURI.value = props.serverInfo.split(":");
 const client = new Client();
 const connectionInfo = ref({
-  hostname: "",
-  port: 38281,
-  game: "",
+  uri: "",
   name: "",
-  items_handling: 7,
+  items: itemsHandlingFlags.all,
   tags: [""],
   password: "",
-  slot_data: false,
+  slotData: false,
 });
-const game = ref("");
 let lastKnownScrollLocation = 0;
-const totalLocation = ref(0);
-const percentageHintCost = ref(0);
 
 watch(
   () => props.isConnected,
@@ -56,16 +49,13 @@ watch(
   () => {
     // console.log("connecting value changed", props.connecting);
     if (props.connecting) {
-      serverURI.value = props.serverInfo.split(":");
       connectionInfo.value = {
-        hostname: serverURI.value[0],
-        port: Number(serverURI.value[1]),
-        game: "",
+        uri: props.serverInfo,
         name: props.slotName,
-        items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
+        items: itemsHandlingFlags.all,
         tags: ["WebClient", "TextOnly"],
         password: props.password,
-        slot_data: false,
+        slotData: false,
       };
       Connect();
     }
@@ -87,6 +77,7 @@ onMounted(() => {
 
 const text = ref(["<span class='default'>Welcome</span>"]);
 let connected = ref(false);
+// wow, this is cursed code
 const plusText = computed({
   get: () => text.value,
   set: (val) => {
@@ -94,27 +85,13 @@ const plusText = computed({
   },
 });
 const inputText = ref("");
-// Connect();
 
 function Connect() {
   // Set up the AP client.
   // Connect to the Archipelago server.
   console.log(connectionInfo.value);
   client
-    .connect(connectionInfo.value)
-    .then(() => {
-      plusText.value = [
-        `<span class="default">Connected to room with ${
-          client.players.all.length - 1
-        } players.</span>`,
-      ];
-      connected.value = true;
-      emit("connected-to-server", true);
-      console.log("connected to " + serverURI.value);
-      // console.log(packet);
-
-      // game = client.data.games.
-    })
+    .login(connectionInfo.value.uri, connectionInfo.value.name, "", connectionInfo.value)
     .catch((error) => {
       if (typeof error[0] === "string") {
         Disconnect(error[0]);
@@ -122,144 +99,97 @@ function Connect() {
         Disconnect("Couldn't connect for some reason");
       }
     });
-  RecieveText();
-  RecievedItems();
-  GetRoomInfo();
 }
 
 function Disconnect(error: string): void {
-  client.disconnect();
+  client.socket.disconnect();
   connected.value = false;
-  client.removeListener("PrintJSON", () => {});
-  client.removeListener("ReceivedItems", () => {});
-  client.removeListener("RoomInfo", () => {});
-  client.removeListener("Retrieved", () => {});
-  client.removeListener("PacketReceived", () => {});
   emit("authenticated", { err: error, authenticate: false });
   text.value = [];
 }
-function RecieveText() {
-  // console.log("text");
-  // Listen for packet events.
-  client.addListener("PrintJSON", (packet) => {
-    let word = "";
-    if (text.value.length >= 500) {
-      text.value.splice(0, 20);
-    }
-    // console.log(text.value.length + " length");
-    packet.data.forEach((text) => {
-      switch (text.type) {
-        case "player_id":
-          // word += client.players.name(Number(text.text));
-          if (
-            client.players.name(Number(text.text)) === connectionInfo.value.name
-          ) {
-            word += `<span class="currentPlayer"> ${client.players.alias(
-              Number(text.text)
-            )}</span>`;
-          } else {
-            word += `<span class="otherPlayer"> ${client.players.alias(
-              Number(text.text)
-            )}<span class="showGameName">${client.players.game(
-              Number(text.text)
-            )}</span></span>`;
-          }
-          break;
-        case "item_id":
-          word += `<span class="${getItemType(text.flags)}">
-             ${client.items.name(text.player, Number(text.text))}</span>`;
-          break;
-        case "location_id":
-          word += `<span class="location"> ${client.locations.name(
-            text.player,
-            Number(text.text)
-          )}</span>`;
-          break;
-        case "color":
-          word += `<span style="color: ${text.color}"> ${text.text}</span>`;
-          break;
-        case "entrance_name":
-          word += `<span class="entrance"> ${text.text}</span>`;
-          break;
-        default:
-          word += `<span class="default"> ${text.text} </span>`;
-          break;
-      }
-    });
-    plusText.value = [word];
-  });
-}
 
-function RecievedItems() {
-  client.addListener("ReceivedItems", (packet) => {
-    // console.log(packet);
-    let packetItems: [{ item: string; amount: number; type: number }] = [
-      { item: "", amount: 0, type: 0 },
+client.socket.on("connected", (packet) => {
+    plusText.value = [
+      `<span class="default">Connected to room with ${
+        packet.players.length - 1
+      } players.</span>`,
     ];
-    packet.items.forEach((i) => {
-      const name: string = client.items.name(game.value, i.item);
-      let noItems: boolean = true;
-      for (let k = 0; k < packetItems.length; k++) {
-        if (name === packetItems[k].item) {
-          packetItems[k].amount += 1;
-          packetItems[k].type = i.flags;
-          noItems = false;
-          break;
-        }
-      }
-      if (noItems) {
-        packetItems.push({ item: name, amount: 1, type: i.flags });
-      }
-    });
-    packetItems.splice(0, 1);
-    // console.log(packetItems);
-    emit("onRecievedItemsChanged", packetItems);
-  });
+    connected.value = true;
+    emit("connected-to-server", true);
+    console.log("connected to " + props.serverInfo);
+});
+
+function processNodes(nodes: MessageNode[]) {
+  let text = nodes.map((node) => {
+    switch(node.type) {
+      case "item": return `<span class="${
+          node.item.progression ? "progressiveItem" :
+          node.item.useful ? "usefulItem" :
+          node.item.trap ? "trapItem" : "normalItem"}">${node.item.name}</span>`;
+      case "location": return `<span class="location">${node.text}</span>`;
+      case "player": return `<span class="player ${node.player.name == client.players.self.name ? "currentPlayer" : "otherPlayer}"}>${node.text}<span class="showGameName">${node.player.game}</span></span>`;
+      case "color": return `<span class="color_${node.color}">${node.text}</span>`;
+      case "entrance": return `<span class="entrance">${node.text}</span>`;
+      case "text": default: return `<span class="default">${node.text}</span>`;
+    }
+  }).join("");
+  plusText.value = [text];
 }
-function GetRoomInfo() {
-  client.addListener("RoomInfo", (packet) => {
-    // console.log(packet);
-    percentageHintCost.value = packet.hint_cost;
-  });
-  client.addListener("RoomUpdate", (packet) => {
-    if (packet.hint_cost) {
-      percentageHintCost.value = packet.hint_cost;
-      const percentageCost = getHintCost();
-      // console.log(percentageCost);
-      emit("hint_cost", percentageCost);
+client.messages.on("message", (text, nodes) => processNodes(nodes));
+
+client.items.on("itemsReceived", (items, startIndex) => {
+  let itemMap: Record<string, number> = {};
+  let packetItems: { item: string; amount: number; type: number }[] = [];
+  for (let i = client.items.received.length - 1; i >= 0; i--) {
+    let item = client.items.received[i];
+    if (item.name in itemMap) {
+      packetItems[itemMap[item.name]].amount += 1
+    } else {
+      itemMap[item.name] = packetItems.length;
+      packetItems.push({item: item.name, amount: 1, type: item.flags});
     }
-    if (packet.hint_points) {
-      emit("current_hint_points", packet.hint_points);
-    }
-  });
-  client.addListener("Connected", (packet) => {
-    totalLocation.value =
-      packet.checked_locations.length + packet.missing_locations.length;
-    const percentageCost = getHintCost();
-    emit("hint_cost", percentageCost);
-    for (const key in packet.slot_info) {
-      if (packet.slot_info[key].name === props.slotName) {
-        game.value = packet.slot_info[key].game;
-      }
-    }
-    emit("current_hint_points", packet.hint_points);
-  });
-  client.addListener("SetReply", (packet) => {
-    parseHintText(packet.value);
-  });
-  // client.addListener("PacketReceived", (packet) => {
-  //   console.log(packet);
-  // });
-  client.addListener("Retrieved", (packet) => {
-    //console.log(packet);
-    let player, hintArray: any;
-    for (player in packet.keys) {
-      hintArray = packet.keys[player];
-    }
-    if (hintArray) {
-      parseHintText(hintArray);
-    }
-  });
+  }
+  emit("onReceivedItemsChanged", packetItems);
+});
+client.room.on("hintCostUpdated", (oldCost, newCost, oldPct, newPct) => {
+  emit("hint_cost", { hintCost: newCost, percentageCost: newPct });
+});
+client.room.on("hintPointsUpdated", (oldVal, newVal) => {
+  emit("current_hint_points", newVal);
+  emit("hint_cost", { hintCost: client.room.hintCost, percentageCost: client.room.hintCostPercentage })
+});
+client.items.on("hintsInitialized", (hints) => {
+  emit("onReceivedHintChanged", client.items.hints.map(renderHint));
+})
+client.items.on("hintReceived", (hint) => {
+  emit("onReceivedHintChanged", client.items.hints.map(renderHint));
+})
+client.items.on("hintFound", (hint) => {
+  emit("onReceivedHintChanged", client.items.hints.map(renderHint));
+});
+
+function renderHint(hint: Hint): {word: string, found: boolean} {
+  function player(player: Player) {
+    return `<span class="player ${player.name == client.players.self.name ? "currentPlayer" : "otherPlayer}"}>${player.alias}<span class="showGameName">${player.game}</span></span>`;
+  }
+  function item(item: Item) {
+    return `<span class="${
+          item.progression ? "progressiveItem" :
+          item.useful ? "usefulItem" :
+          item.trap ? "trapItem" : "normalItem"}">${item.name}</span>`;
+  }
+
+  let word = `<span class="default">[Hint]: </span>`;
+  word += player(hint.item.receiver);
+  word += `<span class="default">'s </span>`;
+  word += item(hint.item);
+  word += `<span class="default"> is at </span>`;
+  word += `<span class="location">${hint.item.locationName}</span>`;
+  word += `<span class="default"> in </span>`;
+  word += player(hint.item.sender);
+  word += `<span class="default">'s World</span>`;
+  
+  return {word, found: hint.found};
 }
 
 function changeHeight(el: any) {
@@ -272,79 +202,14 @@ function changeHeight(el: any) {
     }
   }
 }
-function getHintCost() {
-  return Math.max(
-    0,
-    Math.floor((percentageHintCost.value * totalLocation.value) / 100)
-  );
-}
 function scrollToBottom() {
   let element = document.getElementById("text_body");
   if (element) {
     element.scrollTo(0, element.scrollHeight);
   }
 }
-function parseHintText(data: any) {
-  let word = "";
-  let hint: [{ word: string }] = [{ word: "" }];
-  data.forEach((text: any) => {
-    word = "";
-    word += `<span class="default"> [${text.class}]: </span>`;
-    if (
-      client.players.name(Number(text.receiving_player)) ===
-      connectionInfo.value.name
-    ) {
-      word += `<span class="currentPlayer"> ${client.players.alias(
-        Number(text.receiving_player)
-      )}</span>`;
-    } else {
-      word += `<span class="otherPlayer"> ${client.players.alias(
-        Number(text.receiving_player)
-      )}<span class="showGameName">${client.players.game(
-        Number(text.receiving_player)
-      )}</span></span>`;
-    }
-    word += "<span class=default>'s </span>";
-    word += `<span class="${getItemType(text.item_flags)}"> ${client.items.name(
-      text.receiving_player,
-      Number(text.item)
-    )}</span>`;
-    word += "<span class=default> is at </span>";
-    word += `<span class="location"> ${client.locations.name(
-      text.finding_player,
-      Number(text.location)
-    )}</span>`;
-    word += `<span class="default"> in </span>`;
-    if (
-      client.players.name(Number(text.finding_player)) ===
-      connectionInfo.value.name
-    ) {
-      word += `<span class="currentPlayer"> ${client.players.alias(
-        Number(text.finding_player)
-      )}</span>`;
-    } else {
-      word += `<span class="otherPlayer"> ${client.players.alias(
-        Number(text.finding_player)
-      )}<span class="showGameName">${client.players.game(
-        Number(text.finding_player)
-      )}</span></span>`;
-    }
-    word += `<span class="default">'s World </span>`;
-    if (text.found) {
-      word += `<span style="color: green"> (found) </span>`;
-    } else {
-      word += `<span style="color: red"> (not found) </span> \n`;
-    }
-    if (text.entrance) {
-      word += `<span class="default">at </span>`;
-      word += `<span class="entrance">${text.entrance} </span>`;
-    }
-    hint.push({ word: word });
-  });
-  emit("onRecievedHintChanged", hint);
-}
 function sendText() {
-  client.say(inputText.value);
+  client.messages.say(inputText.value);
   inputText.value = "";
 }
 </script>

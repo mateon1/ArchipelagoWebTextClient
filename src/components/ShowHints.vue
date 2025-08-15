@@ -2,17 +2,18 @@
 import { ref } from "vue";
 
 const props = defineProps<{
-  receivedHints: [{ word: string }];
-  hintCost: number;
+  receivedHints: {word: string, found: boolean}[];
+  hintCost: {hintCost: number, percentageCost: number};
   currentHintPoints: number;
 }>();
-const hintToggle = ref();
+const hintToggle = ref(false);
 function hideHint(word: string) {
   if (!hintToggle.value) {
     return true;
   }
   return word.includes("(not found)");
 }
+
 // console.log(props.receivedHints);
 </script>
 <template>
@@ -26,10 +27,12 @@ function hideHint(word: string) {
       </label>
     </span>
     <div class="default">
-      A hint costs {{ hintCost }}. You have {{ currentHintPoints }} points.
+      A hint costs {{ hintCost.hintCost }}. You have {{ currentHintPoints }} points.
     </div>
     <div v-for="r in props.receivedHints" :key="r.word" class="received_hints">
-      <span v-html="r.word" v-if="hideHint(r.word)"></span>
+      <span v-html="r.word" v-if="!hintToggle || !r.found"></span>
+      <span v-if="r.found && !hintToggle" style="color: green"> (found)</span>
+      <span v-else-if="!r.found && !hintToggle" style="color: red"> (not found)</span>
     </div>
   </div>
 </template>

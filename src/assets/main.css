@@ -6,6 +6,18 @@
   font-weight: normal;
 }
 
+.color_bold { font-weight: bold; }
+.color_underline { text-decoration: underline; }
+.color_black { color: var(--ap-black); }
+.color_red { color: var(--ap-red); }
+.color_green { color: var(--ap-green); }
+.color_yellow { color: var(--ap-yellow); }
+.color_blue { color: var(--ap-blue); }
+.color_magenta { color: var(--ap-magenta); }
+.color_cyan { color: var(--ap-cyan); }
+.color_white { color: var(--ap-white); }
+/* no bg colors */
+
 a,
 .green {
   text-decoration: none;
@@ -177,7 +189,7 @@ header span h1 {
 .otherPlayer {
   color: var(--ap-yellow);
 }
-.otherPlayer .showGameName {
+.player .showGameName {
   visibility: hidden;
   width: 120px;
   background-color: var(--vt-c-black);
@@ -191,10 +203,10 @@ header span h1 {
   position: absolute;
   z-index: 1;
 }
-.otherPlayer:hover .showGameName {
+.player:hover .showGameName {
   visibility: visible;
 }
-.otherPlayer:hover .showGameName:hover {
+.player:hover .showGameName:hover {
   visibility: hidden;
 }
 .location {
