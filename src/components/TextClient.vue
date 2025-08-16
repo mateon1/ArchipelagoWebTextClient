@@ -135,7 +135,7 @@ function processNodes(nodes: MessageNode[]) {
   }).join("");
   plusText.value = [text];
 }
-client.messages.on("message", (text, nodes) => processNodes(nodes));
+client.messages.on("message", (text, nodes: MessageNode[]) => processNodes(nodes));
 
 client.items.on("itemsReceived", (items, startIndex) => {
   let itemMap: Record<string, number> = {};
