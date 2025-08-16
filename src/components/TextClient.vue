@@ -127,7 +127,7 @@ function processNodes(nodes: MessageNode[]) {
           node.item.useful ? "usefulItem" :
           node.item.trap ? "trapItem" : "normalItem"}">${node.item.name}</span>`;
       case "location": return `<span class="location">${node.text}</span>`;
-      case "player": return `<span class="player ${node.player.name == client.players.self.name ? "currentPlayer" : "otherPlayer}"}>${node.text}<span class="showGameName">${node.player.game}</span></span>`;
+      case "player": return `<span class="player ${node.player.name == client.players.self.name ? "currentPlayer" : "otherPlayer"}">${node.text}<span class="showGameName">${node.player.game}</span></span>`;
       case "color": return `<span class="color_${node.color}">${node.text}</span>`;
       case "entrance": return `<span class="entrance">${node.text}</span>`;
       case "text": default: return `<span class="default">${node.text}</span>`;
@@ -170,7 +170,7 @@ client.items.on("hintFound", (hint) => {
 
 function renderHint(hint: Hint): {word: string, found: boolean} {
   function player(player: Player) {
-    return `<span class="player ${player.name == client.players.self.name ? "currentPlayer" : "otherPlayer}"}>${player.alias}<span class="showGameName">${player.game}</span></span>`;
+    return `<span class="player ${player.name == client.players.self.name ? "currentPlayer" : "otherPlayer"}">${player.alias}<span class="showGameName">${player.game}</span></span>`;
   }
   function item(item: Item) {
     return `<span class="${
