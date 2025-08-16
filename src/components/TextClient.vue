@@ -76,7 +76,7 @@ onMounted(() => {
 });
 
 const text = ref(["<span class='default'>Welcome</span>"]);
-let connected = ref(false);
+const connected = ref(false);
 // wow, this is cursed code
 const plusText = computed({
   get: () => text.value,
@@ -120,7 +120,7 @@ client.socket.on("connected", (packet) => {
 });
 
 function processNodes(nodes: MessageNode[]) {
-  let text = nodes.map((node) => {
+  const text = nodes.map((node) => {
     switch(node.type) {
       case "item": return `<span class="${
           node.item.progression ? "progressiveItem" :
@@ -137,13 +137,13 @@ function processNodes(nodes: MessageNode[]) {
 }
 client.messages.on("message", (text, nodes: MessageNode[]) => processNodes(nodes));
 
-client.items.on("itemsReceived", (items, startIndex) => {
-  let itemMap: Record<string, number> = {};
-  let packetItems: { item: string; amount: number; type: number }[] = [];
+client.items.on("itemsReceived", () => {
+  const itemMap: Record<string, number> = {};
+  const packetItems: { item: string; amount: number; type: number }[] = [];
   for (let i = client.items.received.length - 1; i >= 0; i--) {
-    let item = client.items.received[i];
+    const item = client.items.received[i]!;
     if (item.name in itemMap) {
-      packetItems[itemMap[item.name]].amount += 1
+      packetItems[itemMap[item.name]!]!.amount += 1
     } else {
       itemMap[item.name] = packetItems.length;
       packetItems.push({item: item.name, amount: 1, type: item.flags});
@@ -159,12 +159,12 @@ client.room.on("hintPointsUpdated", (oldVal, newVal) => {
   emit("hint_cost", { hintCost: client.room.hintCost, percentageCost: client.room.hintCostPercentage })
 });
 client.items.on("hintsInitialized", (hints) => {
+  emit("onReceivedHintChanged", hints.map(renderHint));
+})
+client.items.on("hintReceived", () => {
   emit("onReceivedHintChanged", client.items.hints.map(renderHint));
 })
-client.items.on("hintReceived", (hint) => {
-  emit("onReceivedHintChanged", client.items.hints.map(renderHint));
-})
-client.items.on("hintFound", (hint) => {
+client.items.on("hintFound", () => {
   emit("onReceivedHintChanged", client.items.hints.map(renderHint));
 });
 
@@ -192,8 +192,8 @@ function renderHint(hint: Hint): {word: string, found: boolean} {
   return {word, found: hint.found};
 }
 
-function changeHeight(el: any) {
-  let element = document.getElementById("text_body");
+function changeHeight(el: Element) {
+  const element = document.getElementById("text_body");
   if (el != null && element != null) {
     //console.log(Math.ceil(element.offsetHeight), element.scrollTop, lastKnownScrollLocation, element.scrollHeight)
     if (Math.ceil(element.scrollHeight) <= lastKnownScrollLocation) {
@@ -203,7 +203,7 @@ function changeHeight(el: any) {
   }
 }
 function scrollToBottom() {
-  let element = document.getElementById("text_body");
+  const element = document.getElementById("text_body");
   if (element) {
     element.scrollTo(0, element.scrollHeight);
   }
@@ -222,7 +222,7 @@ function sendText() {
         v-for="(t, index) in text"
         :key="index"
         :data="index"
-        :ref="(el) => changeHeight(el)"
+        :ref="(el) => changeHeight(el as Element)"
       >
         <span v-html="t"></span>
       </div>

@@ -7,12 +7,6 @@ const props = defineProps<{
   currentHintPoints: number;
 }>();
 const hintToggle = ref(false);
-function hideHint(word: string) {
-  if (!hintToggle.value) {
-    return true;
-  }
-  return word.includes("(not found)");
-}
 
 // console.log(props.receivedHints);
 </script>
