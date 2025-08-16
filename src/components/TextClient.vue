@@ -1,66 +1,60 @@
 <script setup lang="ts">
 import { Client, itemsHandlingFlags, Hint, Player, Item } from "archipelago.js";
 import type { MessageNode } from "archipelago.js";
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted } from "vue";
 const props = defineProps<{
   slotName: string;
   serverInfo: string;
   password: string;
-  isConnected: boolean;
-  connecting: boolean;
 }>();
 const emit = defineEmits<{
+  (
+    e: "connectionStatus",
+    status: { connected: boolean, authenticated: boolean, error?: boolean, message?: string }
+  ): void;
   (
     e: "onReceivedItemsChanged",
     itemName: { item: string; amount: number; type: number }[]
   ): void;
-  (
-    e: "authenticated",
-    authenticate: { err: string; authenticate: boolean }
-  ): void;
   (e: "onReceivedHintChanged", hints: {word: string, found: boolean}[]): void;
-  (e: "connected-to-server", connectedToServer: boolean): void;
   (e: "hint_cost", hintCosts: {hintCost: number, percentageCost: number}): void;
   (e: "current_hint_points", hintPoints: number): void;
 }>();
 
 const client = new Client();
-const connectionInfo = ref({
-  uri: "",
-  name: "",
-  items: itemsHandlingFlags.all,
-  tags: [""],
-  password: "",
-  slotData: false,
-});
 let lastKnownScrollLocation = 0;
+let totalDatapackages = 0;
+let downloadedDatapackages = 0;
 
-watch(
-  () => props.isConnected,
-  () => {
-    // console.log("prop value changed", props.isConnected);
-    if (!props.isConnected) {
-      Disconnect("Disconnected");
+defineExpose({
+  connect() {
+    if (client.authenticated) {
+      throw new Error("Already connected");
     }
-  }
-);
-watch(
-  () => props.connecting,
-  () => {
-    // console.log("connecting value changed", props.connecting);
-    if (props.connecting) {
-      connectionInfo.value = {
-        uri: props.serverInfo,
-        name: props.slotName,
+    // Set up the AP client.
+    // Connect to the Archipelago server.
+    client
+      .login(props.serverInfo, props.slotName, "", {
         items: itemsHandlingFlags.all,
         tags: ["WebClient", "TextOnly"],
         password: props.password,
         slotData: false,
-      };
-      Connect();
-    }
+      })
+      .catch((error) => {
+        if (typeof error[0] === "string") {
+          this.disconnect(error[0]);
+        } else {
+          this.disconnect("Couldn't connect for some reason")
+        }
+      });
+  },
+  disconnect(error?: string) {
+    connected.value = false;
+    client.socket.disconnect();
+    emit("connectionStatus", {connected: false, authenticated: false, error: Boolean(error), message: error ?? ""});
+    text.value = [];
   }
-);
+})
 
 onMounted(() => {
   const element = document.getElementById("text_body");
@@ -86,38 +80,42 @@ const plusText = computed({
 });
 const inputText = ref("");
 
-function Connect() {
-  // Set up the AP client.
-  // Connect to the Archipelago server.
-  console.log(connectionInfo.value);
-  client
-    .login(connectionInfo.value.uri, connectionInfo.value.name, "", connectionInfo.value)
-    .catch((error) => {
-      if (typeof error[0] === "string") {
-        Disconnect(error[0]);
-      } else {
-        Disconnect("Couldn't connect for some reason");
+client.socket.on("roomInfo", (packet) => {
+  totalDatapackages = packet.games.length;
+  downloadedDatapackages = 0;
+  for (const game of packet.games) {
+    const data = client.package.findPackage(game);
+    if (data !== null) {
+      if (data.checksum == packet.datapackage_checksums[game]) {
+        downloadedDatapackages++;
       }
-    });
-}
-
-function Disconnect(error: string): void {
-  client.socket.disconnect();
-  connected.value = false;
-  emit("authenticated", { err: error, authenticate: false });
-  text.value = [];
-}
+    }
+  }
+  emit("connectionStatus", { connected: true, authenticated: false, message: "Got room info" })
+});
+client.socket.on("dataPackage", () => {
+  downloadedDatapackages++;
+  emit("connectionStatus", { connected: true, authenticated: false, message: `Downloading datapackages (${downloadedDatapackages}/${totalDatapackages})`});
+});
 
 client.socket.on("connected", (packet) => {
-    plusText.value = [
-      `<span class="default">Connected to room with ${
-        packet.players.length - 1
-      } players.</span>`,
-    ];
-    connected.value = true;
-    emit("connected-to-server", true);
-    console.log("connected to " + props.serverInfo);
+  plusText.value = [
+    `<span class="default">Connected to room with ${packet.players.length} players.</span>`,
+  ];
+  connected.value = true;
+  emit("connectionStatus", { connected: true, authenticated: true });
+  console.log("connected to " + props.serverInfo);
+  emit("hint_cost", { hintCost: client.room.hintCost, percentageCost: client.room.hintCostPercentage })
 });
+client.socket.on("disconnected", () => {
+  if (connected.value === true) {
+    emit("connectionStatus", { connected: false, authenticated: false, error: true });
+  }
+  connected.value = false;
+});
+
+//client.socket.on("receivedPacket", (p) => {console.log("recv:", p); });
+//client.socket.on("sentPackets", (ps) => {for (let p of ps) console.log("send:", p); });
 
 function processNodes(nodes: MessageNode[]) {
   const text = nodes.map((node) => {
@@ -156,7 +154,6 @@ client.room.on("hintCostUpdated", (oldCost, newCost, oldPct, newPct) => {
 });
 client.room.on("hintPointsUpdated", (oldVal, newVal) => {
   emit("current_hint_points", newVal);
-  emit("hint_cost", { hintCost: client.room.hintCost, percentageCost: client.room.hintCostPercentage })
 });
 client.items.on("hintsInitialized", (hints) => {
   emit("onReceivedHintChanged", hints.map(renderHint));

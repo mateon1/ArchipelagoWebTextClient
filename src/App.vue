@@ -2,15 +2,17 @@
 import TextClient from "./components/TextClient.vue";
 import ReceivedItems from "./components/ReceivedItems.vue";
 import ShowHints from "./components/ShowHints.vue";
-import { ref, watch } from "vue";
+import { ref, useTemplateRef } from "vue";
 
+const textClientRef = useTemplateRef("textClient");
 const inputName = ref("");
 const inputServerInfo = ref("archipelago.gg:38281");
 const inputPassword = ref("");
-const authenticate = ref(false);
-const errorMessage = ref("");
-const viewPage = ref("");
 const connecting = ref(false);
+const authenticated = ref(false);
+const connectionError = ref(false);
+const connectMessage = ref("");
+const viewPage = ref("");
 const receivedItems = ref<{ item: string; amount: number; type: number }[]>([]);
 const receivedHints = ref<{ word: string, found: boolean }[]>([]);
 const hintCost = ref({hintCost: 0, percentageCost: 0});
@@ -18,13 +20,13 @@ const hintPoints = ref(0);
 const url = location.protocol;
 
 function OnConnect() {
-  errorMessage.value = "";
+  connectMessage.value = "";
   viewPage.value = "textClient";
-  connecting.value = true;
+  textClientRef.value?.connect();
 }
 function SwitchProtocol() {
   if (url == "http:") {
-    console.log(url + "connected");
+    console.log(url + " connected");
     location.href = "https://" + location.hostname;
   } else {
     console.log(url);
@@ -32,22 +34,15 @@ function SwitchProtocol() {
   }
 }
 function Disconnect() {
-  authenticate.value = false;
+  textClientRef.value?.disconnect("Disconnected");
+  //authenticated.value = false;
   viewPage.value = "";
 }
-watch(
-  () => errorMessage.value,
-  () => {
-    if (errorMessage.value != "") {
-      connecting.value = false;
-    }
-  }
-);
 </script>
 
 <template>
   <header class="ap_header">
-    <span v-if="authenticate">
+    <span v-if="authenticated">
       <button v-on:click="viewPage = 'itemReceived'" class="ap_button">
         Items Received
       </button>
@@ -63,29 +58,26 @@ watch(
     </span>
   </header>
   <div class="ap_body">
-    <div v-show="authenticate">
+    <div v-show="authenticated">
       <span v-show="viewPage === 'textClient'" class="wrapper">
-        <TextClient
+        <TextClient ref="textClient"
           :slotName="inputName"
           :serverInfo="inputServerInfo"
           :password="inputPassword"
-          :isConnected="authenticate"
-          :connecting="connecting"
-          @authenticated="
-            (payload) => {
-              authenticate = payload.authenticate;
-              errorMessage = payload.err;
-            }
-          "
+          @connectionStatus="(payload) => {
+            connecting = payload.connected;
+            authenticated = payload.authenticated;
+            connectionError = payload.error ?? false;
+            connectMessage = payload.message ?? '';
+          }"
           @onReceivedItemsChanged="(payload) => (receivedItems = payload)"
           @onReceivedHintChanged="(payload) => (receivedHints = payload)"
-          @connected-to-server="(payload) => (authenticate = payload)"
           @hint_cost="(payload) => (hintCost = payload)"
           @current_hint_points="(payload) => (hintPoints = payload)"
         />
       </span>
     </div>
-    <div v-show="!authenticate" class="connection_info">
+    <div v-show="!authenticated" class="connection_info">
       <form onsubmit="return false;" class="server_info">
         <input
           type="text"
@@ -118,11 +110,11 @@ watch(
           </button>
         </div>
       </form>
-      <div class="error_message" v-if="errorMessage !== ''">
-        <p>{{ errorMessage }}</p>
+      <div class="error_message" v-if="connectionError">
+        <p>{{ connectMessage ?? "Unknown connection error" }}</p>
       </div>
-      <div class="connecting_message" v-else-if="!authenticate && connecting">
-        <p>Connecting</p>
+      <div class="connecting_message" v-else-if="!authenticated && connecting">
+        <p>Connecting<span v-if="connectMessage">: {{ connectMessage }}</span></p>
       </div>
     </div>
     <div v-show="viewPage === 'itemReceived'" class="wrapper">
@@ -135,7 +127,7 @@ watch(
         :currentHintPoints="hintPoints"
       />
     </div>
-    <div class="ap_disconnect_button" v-show="authenticate">
+    <div class="ap_disconnect_button" v-show="authenticated">
       <button class="ap_button" v-on:click="Disconnect()">Disconnect</button>
     </div>
   </div>
